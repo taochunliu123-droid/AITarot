@@ -1548,7 +1548,9 @@
                             if (results.landmarks && results.landmarks.length > 0) {
                                 handDetected = true;
                                 document.getElementById('handDot').classList.add('active');
-                                document.getElementById('handStatus').textContent = t('handDetected');
+                                // 如果有手，根據語言顯示操作提示
+const statusText = currentLang === 'zh' ? "等待捏合" : "Wait Pinch";
+document.getElementById('handStatus').textContent = statusText;
 
                                 // 只取第一隻手來做判斷，避免雙手打架
                                 const landmarks = results.landmarks[0]; 
@@ -1576,10 +1578,10 @@
             }
 
             // ==========================================
-            // 新增：帶有「長按確認」的手勢檢查
+            // 新增：帶有「文字提示」的手勢檢查
             // ==========================================
             function checkGestureWithHold(ctx, landmarks, time) {
-                // 如果正在抽牌中，就不做任何感應
+                // 如果正在抽牌中，就不做任何感應，也不顯示文字
                 if (isDrawing) {
                     pinchStartTime = 0;
                     return;
@@ -1588,52 +1590,65 @@
                 const thumbTip = landmarks[4];
                 const indexTip = landmarks[8];
                 
-                // 計算距離
-                const distance = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
+                // 計算螢幕座標
                 const screenX = (1 - thumbTip.x) * handCanvas.width;
                 const screenY = thumbTip.y * handCanvas.height;
 
-                // 閾值設定 (0.06 約為手指輕觸的距離)
+                // 1. 繪製跟隨手部的提示文字 (Cyberpunk 風格)
+                ctx.save();
+                ctx.font = "16px 'Orbitron', sans-serif";
+                ctx.fillStyle = "#00FFFF"; // Cyan
+                ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
+                ctx.shadowBlur = 4;
+                
+                // 判斷目前的狀態顯示不同文字
+                let labelText = currentLang === 'zh' ? "👌 捏合手指" : "👌 Pinch Fingers";
+                
+                // 如果正在捏合 (isHolding)，文字變成黃色並提示「保持」
+                if (isHolding) {
+                    ctx.fillStyle = "#FF6B35"; // Orange
+                    labelText = currentLang === 'zh' ? "⏳ 保持..." : "⏳ Hold...";
+                }
+                
+                // 在大拇指右方偏移一點的位置畫字
+                ctx.fillText(labelText, screenX + 20, screenY - 20);
+                ctx.restore();
+
+
+                // 2. 計算距離與觸發邏輯 (同前次修改)
+                const distance = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
+
+                // 閾值設定
                 if (distance < 0.06) {
                     if (!isHolding) {
-                        // 剛開始捏合，記錄時間
                         isHolding = true;
                         pinchStartTime = time;
                     }
 
-                    // 計算持續了多久
                     const elapsed = time - pinchStartTime;
-                    const progress = Math.min(elapsed / TRIGGER_DELAY, 1); // 0.0 ~ 1.0
+                    const progress = Math.min(elapsed / TRIGGER_DELAY, 1);
 
-                    // === 視覺回饋：畫出進度圈圈 ===
+                    // 畫進度圈圈
                     ctx.beginPath();
-                    // 外圈 (底色)
                     ctx.arc(screenX, screenY, 25, 0, Math.PI * 2);
                     ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
                     ctx.lineWidth = 4;
                     ctx.stroke();
 
-                    // 進度條 (動態)
                     ctx.beginPath();
-                    // 從 -90度(12點鐘) 開始畫
                     ctx.arc(screenX, screenY, 25, -Math.PI / 2, (-Math.PI / 2) + (Math.PI * 2 * progress));
-                    ctx.strokeStyle = '#FF6B35'; // 使用 Logo 的橘色
+                    ctx.strokeStyle = '#FF6B35';
                     ctx.lineWidth = 5;
                     ctx.stroke();
 
-                    // === 觸發判斷 ===
                     if (progress >= 1) {
-                        // 確認已滿 1 秒，觸發！
-                        showToast("👌 手勢確認：啟動！");
+                        showToast(currentLang === 'zh' ? "👌 手勢確認：啟動！" : "👌 Gesture Confirmed!");
                         drawCards();
-                        
-                        // 觸發後重置，避免連續觸發
                         pinchStartTime = 0; 
                         isHolding = false;
                     }
 
                 } else {
-                    // 手指放開了，重置所有狀態
                     isHolding = false;
                     pinchStartTime = 0;
                 }
