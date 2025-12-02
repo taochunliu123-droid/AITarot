@@ -269,7 +269,8 @@
             
             deck.classList.remove('hidden-cards');
             for(let i=0;i<3;i++){ await sleep(200); cards[i].classList.add('fly-in'); }
-            await sleep(600);
+            await sleep(800);
+            cards.forEach(c=>c.classList.remove('fly-in')); // 移除 fly-in 讓 transform 可以正常運作
             for(let i=0;i<3;i++){ await sleep(150); cards[i].classList.add('shuffling'); }
             await sleep(600); cards.forEach(c=>c.classList.remove('shuffling'));
             
