@@ -763,9 +763,9 @@
                     },
                     runningMode: 'VIDEO',
                     numHands: 1,
-                    minHandDetectionConfidence: 0.7, // Increased confidence
-                    minHandPresenceConfidence: 0.7,
-                    minTrackingConfidence: 0.6
+                    minHandDetectionConfidence: 0.5, // [Fix] Lowered to 0.5 for better detection
+                    minHandPresenceConfidence: 0.5,
+                    minTrackingConfidence: 0.5
                 });
                 startHandDetection();
             } catch (e) { console.error('Hand tracking error:', e); }
@@ -881,8 +881,17 @@
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } } });
                 const video = document.getElementById('webcam');
                 video.srcObject = stream;
-                video.onloadedmetadata = () => initHandTracking();
-            } catch (e) { console.log('Camera error', e); }
+                
+                // [Fix] Ensure video is visible and playing for detection
+                video.classList.add('active');
+                video.onloadedmetadata = () => {
+                    video.play();
+                    initHandTracking();
+                };
+            } catch (e) { 
+                console.log('Camera error', e);
+                showToast("Camera Error: Check Permissions or HTTPS");
+            }
         }
 
         // ==================== INIT ====================
