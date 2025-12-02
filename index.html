@@ -7,7 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
     <style>
         :root { --cyber-cyan: #00FFFF; --cyber-orange: #FF6B35; --cyber-purple: #9D4EDD; --cyber-gold: #FFD700; --bg-dark: #0a0a0f; --bg-panel: rgba(10, 20, 40, 0.9); }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -69,17 +68,14 @@
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
         .question-input { width: 100%; padding: 12px; background: rgba(0, 255, 255, 0.05); border: 1px solid var(--cyber-cyan-dim); border-radius: 6px; color: var(--cyber-cyan); margin-bottom: 12px; font-family: 'Noto Sans TC'; }
         .question-input:focus { outline: none; border-color: var(--cyber-cyan); box-shadow: 0 0 20px var(--cyber-cyan-dim); }
-        
-        /* AI Toggle */
         .ai-control { display: flex; align-items: center; margin-bottom: 12px; gap: 10px; padding: 8px; background: rgba(0,255,255,0.05); border-radius: 6px; border: 1px solid rgba(0,255,255,0.2); }
-        .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 24px; border: 1px solid #555; }
         .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: #aaa; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--cyber-purple); border-color: var(--cyber-cyan); }
         input:checked + .slider:before { transform: translateX(20px); background-color: #fff; box-shadow: 0 0 8px #fff; }
         .ai-label { font-size: 0.85rem; color: var(--cyber-cyan); font-family: 'Orbitron'; }
-
         .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
         .btn { flex: 1; padding: 14px; background: rgba(0,255,255,0.05); border: 2px solid var(--cyber-cyan); border-radius: 6px; color: var(--cyber-cyan); font-family: 'Orbitron'; cursor: pointer; position: relative; overflow: hidden; transition: all 0.3s; }
         .btn:hover { background: rgba(0,255,255,0.2); box-shadow: 0 0 25px var(--cyber-cyan-dim); transform: translateY(-2px); }
@@ -180,15 +176,14 @@
             <div class="card-deck" id="cardDeck"></div>
             <div class="control-panel">
                 <div class="control-title" id="controlTitle">占卜控制台</div>
-                
                 <div class="ai-control">
                     <label class="toggle-switch">
                         <input type="checkbox" id="aiToggle">
                         <span class="slider"></span>
                     </label>
-                    <span class="ai-label">🤖 啟動 PM里長伯 AI 解讀 (GPT-4)</span>
+                    <span class="ai-label" id="aiToggleLabel">🤖 啟動 PM里長伯 AI 解讀 (GPT-4)</span>
                 </div>
-
+                
                 <input type="text" class="question-input" id="questionInput" placeholder="輸入您的問題...">
                 <div class="btn-group">
                     <button class="btn primary" id="btnDraw"><span id="btnDrawText">◆ 啟動塔羅算法 ◆</span></button>
@@ -211,10 +206,12 @@
     <script>
         const i18n = {
             zh: {
-                mainTitle: 'PM里長伯塔羅牌', loadingText: '系統初始化中...', tarotTitle: '◈ 算法塔羅占卜 ◈', tarotSubtitle: '結合AI運算與古老智慧的未來占卜系統', controlTitle: '占卜控制台', placeholder: '輸入您的問題...', btnDraw: '◆ 啟動塔羅算法 ◆', btnReset: '重置', readingTitle: '◈ 算法解讀結果', btnImage: '圖片', btnPrint: 'PDF', footerText: '里長伯幫助您用AI玩轉敏捷', handDetected: '偵測中', handNone: '無偵測', positions: ['過去', '現在', '未來'], question: '問題', summary: '⭐ 總結解讀', awaiting: '等待揭示', savingImage: '正在生成圖片...', pleaseDrawFirst: '請先進行占卜', printTitle: 'PM里長伯塔羅牌', aiThinking: '🔮 里長伯正在通靈中...', aiError: '⚠️ AI 連線失敗'
+                mainTitle: 'PM里長伯塔羅牌', loadingText: '系統初始化中...', tarotTitle: '◈ 算法塔羅占卜 ◈', tarotSubtitle: '結合AI運算與古老智慧的未來占卜系統', controlTitle: '占卜控制台', placeholder: '輸入您的問題...', btnDraw: '◆ 啟動塔羅算法 ◆', btnReset: '重置', readingTitle: '◈ 算法解讀結果', btnImage: '圖片', btnPrint: 'PDF', footerText: '里長伯幫助您用AI玩轉敏捷', handDetected: '偵測中', handNone: '無偵測', positions: ['過去', '現在', '未來'], question: '問題', summary: '⭐ 總結解讀', awaiting: '等待揭示', savingImage: '正在生成圖片...', pleaseDrawFirst: '請先進行占卜', printTitle: 'PM里長伯塔羅牌', aiThinking: '🔮 里長伯正在通靈中...', aiError: '⚠️ AI 連線失敗',
+                aiMode: '🤖 啟動 PM里長伯 AI 解讀 (GPT-4)'
             },
             en: {
-                mainTitle: 'PM Mayors Tarot', loadingText: 'Initializing...', tarotTitle: '◈ Algorithmic Tarot ◈', tarotSubtitle: 'Futuristic divination system', controlTitle: 'Divination Console', placeholder: 'Enter your question...', btnDraw: '◆ Activate Algorithm ◆', btnReset: 'Reset', readingTitle: '◈ Reading Results', btnImage: 'Image', btnPrint: 'PDF', footerText: 'PM Mayors helps you master Agile with AI', handDetected: 'Detected', handNone: 'None', positions: ['Past', 'Present', 'Future'], question: 'Question', summary: '⭐ Summary', awaiting: 'Awaiting', savingImage: 'Generating image...', pleaseDrawFirst: 'Please draw cards first', printTitle: 'PM Mayors Tarot', aiThinking: '🔮 AI is channeling...', aiError: '⚠️ AI Connection Failed'
+                mainTitle: 'PM Mayors Tarot', loadingText: 'Initializing...', tarotTitle: '◈ Algorithmic Tarot ◈', tarotSubtitle: 'Futuristic divination system', controlTitle: 'Divination Console', placeholder: 'Enter your question...', btnDraw: '◆ Activate Algorithm ◆', btnReset: 'Reset', readingTitle: '◈ Reading Results', btnImage: 'Image', btnPrint: 'PDF', footerText: 'PM Mayors helps you master Agile with AI', handDetected: 'Detected', handNone: 'None', positions: ['Past', 'Present', 'Future'], question: 'Question', summary: '⭐ Summary', awaiting: 'Awaiting', savingImage: 'Generating image...', pleaseDrawFirst: 'Please draw cards first', printTitle: 'PM Mayors Tarot', aiThinking: '🔮 AI is channeling...', aiError: '⚠️ AI Connection Failed',
+                aiMode: '🤖 Enable AI Reading (GPT-4)'
             }
         };
         let currentLang = 'zh';
@@ -231,6 +228,7 @@
         function updateUI() {
             ['mainTitle','tarotTitle','tarotSubtitle','controlTitle','btnDrawText','btnResetText','readingTitle','btnImageText','btnPrintText','footerText'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=t(id.replace('Text','').replace('main','main')); });
             document.getElementById('questionInput').placeholder=t('placeholder'); document.getElementById('handStatus').textContent=handDetected?t('handDetected'):t('handNone');
+            document.getElementById('aiToggleLabel').textContent = t('aiMode');
         }
 
         const particleCanvas=document.getElementById('particleCanvas'), pCtx=particleCanvas.getContext('2d');
@@ -309,15 +307,21 @@
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({ prompt })
                     });
-                    const data = await res.json();
                     
+                    if (!res.ok) {
+                        // 處理 Vercel 返回的非 200 錯誤
+                        const errData = await res.json().catch(() => ({}));
+                        throw new Error(errData.error || `Server Error: ${res.status}`);
+                    }
+
+                    const data = await res.json();
                     if(data.error) throw new Error(data.error);
                     const aiText = data.choices[0].message.content;
                     document.getElementById('ai-summary').innerHTML = aiText.replace(/\n/g, '<br>');
                     window.currentReading.summary = aiText;
                 } catch(e) {
                     console.error(e);
-                    document.getElementById('ai-summary').textContent = `${t('aiError')} (${e.message || 'Check Server Log'})`;
+                    document.getElementById('ai-summary').textContent = `${t('aiError')} (${e.message || 'Check Server Logs'})`;
                 }
             }
         }
