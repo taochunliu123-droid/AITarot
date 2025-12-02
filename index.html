@@ -495,7 +495,7 @@
         </div>
     </footer>
 
-    <script>
+  <script>
         // ==================== CONFIG & DATA ====================
         const i18n = {
             zh: {
@@ -695,7 +695,6 @@
                 const name = currentLang === 'zh' ? card.zh : card.en;
                 const meaning = currentLang === 'zh' ? card.meaningZh : card.meaningEn;
                 
-                // [RESTORED] 詳細解讀邏輯
                 let interpretation;
                 if (currentLang === 'zh') {
                     const intros = [
@@ -713,10 +712,15 @@
                     interpretation = intros[i];
                 }
 
-                html += `<div class="reading-section"><h4>${positions[i]} - ${name} ${card.symbol}</h4><p>${interpretation}</p></div>`;
+                html += `
+                    <div class="reading-section">
+                        <h4>${positions[i]} - ${name} ${card.symbol}</h4>
+                        <p>${interpretation}</p>
+                    </div>
+                `;
             });
-            
-            // [RESTORED] 綜合解讀邏輯
+
+            // Summary
             const c0 = currentLang === 'zh' ? selectedCards[0].zh : selectedCards[0].en;
             const c1 = currentLang === 'zh' ? selectedCards[1].zh : selectedCards[1].en;
             const c2 = currentLang === 'zh' ? selectedCards[2].zh : selectedCards[2].en;
@@ -724,10 +728,18 @@
             const summary = currentLang === 'zh' 
                 ? `綜合三張牌的訊息：從「${c0}」的過往經驗，到「${c1}」的現況覺察，再到「${c2}」的未來指引。命運的算法顯示，您正處於重要的人生轉折點。建議保持開放的心態，信任直覺，擁抱即將到來的改變。`
                 : `Synthesizing the three cards: from "${c0}" in the past, to "${c1}" in the present, to "${c2}" guiding the future. The algorithm shows you're at an important turning point. Stay open, trust your intuition, and embrace the changes ahead.`;
-                
-            html += `<div class="summary-box"><h4>${t('summary')}</h4><p class="summary-text">${summary}</p></div>`;
+
+            html += `
+                <div class="summary-box">
+                    <h4>${t('summary')}</h4>
+                    <p class="summary-text">${summary}</p>
+                </div>
+            `;
+
             document.getElementById('readingContent').innerHTML = html;
             document.getElementById('readingResult').classList.add('show');
+
+            // Store for print
             window.currentReading = { question, summary };
         }
 
