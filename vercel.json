@@ -1,9 +1,9 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "**/*",
-      "use": "@vercel/static"
+  "framework": null,
+  "functions": {
+    "api/tarot.js": {
+      "runtime": "@vercel/edge"
     }
-  ]
+  }
 }
