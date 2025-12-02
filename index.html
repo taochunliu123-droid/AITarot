@@ -5,9 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PM里長伯塔羅牌 | PM Mayors Tarot</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- MediaPipe Tasks Vision -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.js" crossorigin="anonymous"></script>
+    
+    <!-- html2canvas for image save -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
     <style>
         :root {
             --cyber-cyan: #00FFFF;
@@ -17,7 +21,7 @@
             --cyber-red: #FF3366;
             --cyber-gold: #FFD700;
             --bg-dark: #0a0a0f;
-            --bg-panel: rgba(10, 20, 40, 0.85);
+            --bg-panel: rgba(10, 20, 40, 0.9);
         }
 
         * {
@@ -36,12 +40,8 @@
 
         /* Print Styles */
         @media print {
-            body * {
-                visibility: hidden;
-            }
-            #printArea, #printArea * {
-                visibility: visible;
-            }
+            body * { visibility: hidden; }
+            #printArea, #printArea * { visibility: visible; }
             #printArea {
                 position: absolute;
                 left: 0;
@@ -49,10 +49,7 @@
                 width: 100%;
                 background: white !important;
                 color: black !important;
-                padding: 40px;
-            }
-            .no-print {
-                display: none !important;
+                padding: 30px;
             }
         }
 
@@ -65,13 +62,7 @@
             height: 100%;
             pointer-events: none;
             z-index: 1000;
-            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,255,0.02) 2px, rgba(0,255,255,0.02) 4px);
-            animation: scanMove 8s linear infinite;
-        }
-
-        @keyframes scanMove {
-            0% { transform: translateY(0); }
-            100% { transform: translateY(4px); }
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,255,0.015) 2px, rgba(0,255,255,0.015) 4px);
         }
 
         /* Particle Canvas */
@@ -82,7 +73,7 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 100;
+            z-index: 50;
         }
 
         /* Video Background */
@@ -93,7 +84,6 @@
             width: 100%;
             height: 100%;
             z-index: -1;
-            overflow: hidden;
             background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0f0f1a 100%);
         }
 
@@ -101,15 +91,14 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            filter: brightness(0.4) contrast(1.3) saturate(0.8);
+            filter: brightness(0.35) contrast(1.2) saturate(0.7);
             transform: scaleX(-1);
             display: none;
         }
 
-        #webcam.active {
-            display: block;
-        }
+        #webcam.active { display: block; }
 
+        /* Hand Canvas */
         #handCanvas {
             position: fixed;
             top: 0;
@@ -117,37 +106,37 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 5;
+            z-index: 10;
         }
 
         /* Main Container */
         .main-container {
             position: relative;
             min-height: 100vh;
-            padding: 20px;
-            padding-bottom: 140px;
-            z-index: 10;
+            padding: 15px;
+            padding-bottom: 100px;
+            z-index: 20;
         }
 
         /* Header */
         .header {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 20px;
+            align-items: center;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 10px;
+            margin-bottom: 15px;
         }
 
         .logo-section {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
         }
 
         .logo-container {
-            width: 70px;
-            height: 70px;
+            width: 55px;
+            height: 55px;
             border-radius: 50%;
             border: 2px solid var(--cyber-cyan);
             display: flex;
@@ -156,12 +145,13 @@
             background: rgba(0, 255, 255, 0.1);
             animation: logoPulse 2s ease-in-out infinite;
             flex-shrink: 0;
+            overflow: hidden;
         }
 
         .logo-container img {
-            width: 60px;
-            height: 60px;
-            object-fit: contain;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .logo-fallback {
@@ -170,24 +160,24 @@
 
         .logo-fallback .pm {
             font-family: 'Orbitron', sans-serif;
-            font-size: 1.2rem;
+            font-size: 1rem;
             color: var(--cyber-cyan);
         }
 
         .logo-fallback .mayors {
             font-family: 'Orbitron', sans-serif;
-            font-size: 0.6rem;
+            font-size: 0.5rem;
             color: var(--cyber-orange);
         }
 
         @keyframes logoPulse {
             0%, 100% { box-shadow: 0 0 10px var(--cyber-cyan); }
-            50% { box-shadow: 0 0 25px var(--cyber-cyan), 0 0 50px var(--cyber-orange); }
+            50% { box-shadow: 0 0 25px var(--cyber-cyan), 0 0 40px var(--cyber-orange); }
         }
 
         .title-section h1 {
             font-family: 'Orbitron', sans-serif;
-            font-size: clamp(1.2rem, 4vw, 2rem);
+            font-size: clamp(1rem, 3.5vw, 1.6rem);
             font-weight: 900;
             background: linear-gradient(90deg, var(--cyber-cyan), var(--cyber-orange), var(--cyber-purple));
             -webkit-background-clip: text;
@@ -196,232 +186,140 @@
         }
 
         .title-section .subtitle {
-            font-size: 0.75rem;
+            font-size: 0.65rem;
             color: var(--cyber-cyan-dim);
-            letter-spacing: 2px;
+            letter-spacing: 1px;
         }
 
-        /* Camera Status */
-        .camera-status {
-            position: fixed;
-            top: 100px;
-            left: 20px;
-            z-index: 200;
-            background: var(--bg-panel);
-            border: 1px solid var(--cyber-cyan);
-            border-radius: 8px;
-            padding: 15px;
-            backdrop-filter: blur(10px);
-            max-width: 280px;
-        }
-
-        .camera-status.hidden {
-            display: none;
-        }
-
-        .status-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.8rem;
-            color: var(--cyber-orange);
-            margin-bottom: 10px;
+        /* Language Toggle */
+        .lang-toggle {
             display: flex;
-            align-items: center;
-            gap: 8px;
+            gap: 5px;
         }
 
-        .status-title::before {
-            content: '◆';
-            animation: blink 1s infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
-        .status-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 5px 0;
-            font-size: 0.8rem;
-            border-bottom: 1px dashed rgba(0,255,255,0.2);
-        }
-
-        .status-item .label {
-            color: #888;
-        }
-
-        .status-item .value {
-            font-family: 'Orbitron', sans-serif;
-        }
-
-        .status-item .value.active {
-            color: #00FF00;
-        }
-
-        .status-item .value.warning {
-            color: var(--cyber-orange);
-        }
-
-        .status-item .value.error {
-            color: var(--cyber-red);
-        }
-
-        .camera-note {
-            margin-top: 10px;
-            padding: 10px;
-            background: rgba(255, 107, 53, 0.1);
-            border-radius: 5px;
-            font-size: 0.7rem;
-            color: var(--cyber-orange);
-            line-height: 1.4;
-        }
-
-        /* Time Display */
-        .time-display {
-            text-align: right;
-            background: var(--bg-panel);
+        .lang-btn {
+            padding: 6px 12px;
+            background: transparent;
             border: 1px solid var(--cyber-cyan);
-            border-radius: 8px;
-            padding: 12px;
-            backdrop-filter: blur(10px);
-        }
-
-        .current-time {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.5rem;
+            border-radius: 4px;
             color: var(--cyber-cyan);
-            text-shadow: 0 0 15px var(--cyber-cyan);
-        }
-
-        .current-date {
-            font-size: 0.8rem;
-            color: var(--cyber-orange);
-        }
-
-        /* HUD Panel */
-        .hud-panel {
-            background: var(--bg-panel);
-            border: 1px solid var(--cyber-cyan);
-            border-radius: 8px;
-            padding: 15px;
-            backdrop-filter: blur(10px);
-            position: relative;
-        }
-
-        .hud-panel::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 20px;
-            right: 20px;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--cyber-cyan), transparent);
-        }
-
-        .panel-title {
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
             font-family: 'Orbitron', sans-serif;
-            font-size: 0.85rem;
-            color: var(--cyber-orange);
-            margin-bottom: 12px;
+        }
+
+        .lang-btn.active {
+            background: var(--cyber-cyan);
+            color: #000;
+        }
+
+        .lang-btn:hover:not(.active) {
+            background: rgba(0, 255, 255, 0.2);
+        }
+
+        /* Time & Status */
+        .status-bar {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 15px;
+            flex-wrap: wrap;
         }
 
-        .panel-title::before {
-            content: '◆';
-            animation: blink 1s infinite;
+        .time-display {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            color: var(--cyber-cyan);
+            text-shadow: 0 0 10px var(--cyber-cyan);
+        }
+
+        .hand-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.75rem;
+        }
+
+        .hand-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #555;
+            transition: all 0.3s ease;
+        }
+
+        .hand-dot.active {
+            background: #00FF00;
+            box-shadow: 0 0 10px #00FF00;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
         }
 
         /* Tarot Section */
         .tarot-section {
-            max-width: 1000px;
+            max-width: 900px;
             margin: 0 auto;
-            padding-top: 20px;
         }
 
         .tarot-header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
 
         .tarot-header h2 {
             font-family: 'Orbitron', sans-serif;
-            font-size: clamp(1.2rem, 3vw, 1.8rem);
+            font-size: clamp(1.1rem, 3vw, 1.5rem);
             color: var(--cyber-cyan);
-            margin-bottom: 5px;
-        }
-
-        .tarot-header .subtitle-en {
-            font-size: 0.8rem;
-            color: var(--cyber-purple);
             margin-bottom: 5px;
         }
 
         .tarot-header p {
             color: #666;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
         }
 
         /* Card Deck */
         .card-deck {
             display: flex;
             justify-content: center;
-            gap: 15px;
-            flex-wrap: wrap;
-            margin-bottom: 30px;
+            gap: clamp(10px, 3vw, 20px);
+            margin-bottom: 25px;
             perspective: 1500px;
-            min-height: 300px;
+            min-height: 280px;
             align-items: center;
         }
 
         .tarot-card {
-            width: clamp(120px, 20vw, 160px);
-            height: clamp(200px, 35vw, 280px);
+            width: clamp(90px, 18vw, 140px);
+            height: clamp(150px, 30vw, 240px);
             position: relative;
             cursor: pointer;
             transform-style: preserve-3d;
-            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .tarot-card:hover:not(.flipped) {
-            transform: translateY(-15px) rotateY(5deg) rotateX(5deg);
+            transform: translateY(-10px) rotateY(5deg);
         }
 
         .tarot-card.flipped {
             transform: rotateY(180deg);
         }
 
-        .tarot-card.drawing {
-            animation: cardShuffle 0.5s ease-in-out;
+        .tarot-card.shuffling {
+            animation: shuffle 0.6s ease-in-out;
         }
 
-        @keyframes cardShuffle {
-            0% { transform: translateY(0) rotateZ(0); }
-            25% { transform: translateY(-50px) rotateZ(-10deg); }
-            50% { transform: translateY(-30px) rotateZ(10deg); }
-            75% { transform: translateY(-40px) rotateZ(-5deg); }
-            100% { transform: translateY(0) rotateZ(0); }
-        }
-
-        .tarot-card.reveal {
-            animation: cardReveal 1s ease-out forwards;
-        }
-
-        @keyframes cardReveal {
-            0% { 
-                transform: rotateY(0) scale(0.8);
-                filter: brightness(2);
-            }
-            50% { 
-                transform: rotateY(90deg) scale(1.1);
-                filter: brightness(3);
-            }
-            100% { 
-                transform: rotateY(180deg) scale(1);
-                filter: brightness(1);
-            }
+        @keyframes shuffle {
+            0% { transform: translateY(0) rotateZ(0) scale(1); }
+            25% { transform: translateY(-40px) rotateZ(-8deg) scale(1.05); }
+            50% { transform: translateY(-20px) rotateZ(8deg) scale(1.1); }
+            75% { transform: translateY(-30px) rotateZ(-4deg) scale(1.05); }
+            100% { transform: translateY(0) rotateZ(0) scale(1); }
         }
 
         .card-face {
@@ -429,7 +327,8 @@
             width: 100%;
             height: 100%;
             backface-visibility: hidden;
-            border-radius: 12px;
+            -webkit-backface-visibility: hidden;
+            border-radius: 10px;
             overflow: hidden;
         }
 
@@ -439,27 +338,17 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 30px var(--cyber-cyan-dim), inset 0 0 50px rgba(0, 255, 255, 0.1);
+            box-shadow: 0 0 25px var(--cyber-cyan-dim), inset 0 0 40px rgba(0, 255, 255, 0.1);
         }
 
         .card-back::before {
             content: '';
             position: absolute;
-            width: 85%;
-            height: 85%;
+            width: 80%;
+            height: 80%;
             border: 1px dashed var(--cyber-cyan);
             border-radius: 8px;
-            animation: rotateFrame 20s linear infinite;
-        }
-
-        .card-back::after {
-            content: '';
-            position: absolute;
-            width: 70%;
-            height: 70%;
-            border: 1px solid rgba(255, 107, 53, 0.3);
-            border-radius: 8px;
-            animation: rotateFrame 15s linear infinite reverse;
+            animation: rotateFrame 15s linear infinite;
         }
 
         @keyframes rotateFrame {
@@ -468,9 +357,9 @@
         }
 
         .card-pattern {
-            font-size: clamp(2.5rem, 8vw, 4rem);
+            font-size: clamp(2rem, 6vw, 3.5rem);
             color: var(--cyber-cyan);
-            text-shadow: 0 0 30px var(--cyber-cyan);
+            text-shadow: 0 0 25px var(--cyber-cyan);
             animation: patternPulse 2s ease-in-out infinite;
             z-index: 1;
         }
@@ -484,22 +373,22 @@
             background: linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%);
             border: 2px solid var(--cyber-gold);
             transform: rotateY(180deg);
-            padding: 12px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 0 40px rgba(255, 215, 0, 0.4), inset 0 0 30px rgba(255, 215, 0, 0.1);
+            box-shadow: 0 0 35px rgba(255, 215, 0, 0.4);
         }
 
         .card-position {
             font-family: 'Orbitron', sans-serif;
-            font-size: 0.65rem;
+            font-size: clamp(0.5rem, 1.5vw, 0.65rem);
             color: var(--cyber-purple);
             text-align: center;
         }
 
         .card-number {
             font-family: 'Orbitron', sans-serif;
-            font-size: 0.7rem;
+            font-size: clamp(0.55rem, 1.5vw, 0.7rem);
             color: var(--cyber-gold);
             text-align: center;
             margin-top: 2px;
@@ -510,54 +399,48 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: clamp(3rem, 10vw, 5rem);
-            text-shadow: 0 0 30px currentColor;
+            font-size: clamp(2.5rem, 8vw, 4rem);
+            text-shadow: 0 0 25px currentColor;
         }
 
         .card-name {
             text-align: center;
-            margin-top: 8px;
+            margin-top: 5px;
         }
 
-        .card-name .zh {
+        .card-name-text {
             font-family: 'Orbitron', sans-serif;
-            font-size: 0.9rem;
+            font-size: clamp(0.65rem, 2vw, 0.85rem);
             color: var(--cyber-cyan);
             text-shadow: 0 0 10px var(--cyber-cyan);
         }
 
-        .card-name .en {
-            font-size: 0.6rem;
-            color: #888;
-            margin-top: 2px;
-        }
-
         .card-meaning {
-            font-size: 0.6rem;
-            color: #666;
+            font-size: clamp(0.5rem, 1.2vw, 0.6rem);
+            color: #777;
             text-align: center;
-            margin-top: 5px;
-            line-height: 1.3;
+            margin-top: 3px;
+            line-height: 1.2;
         }
 
         /* Control Panel */
         .control-panel {
             background: var(--bg-panel);
             border: 1px solid var(--cyber-cyan);
-            border-radius: 12px;
-            padding: 25px;
-            margin-bottom: 30px;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
             backdrop-filter: blur(10px);
         }
 
         .control-title {
             font-family: 'Orbitron', sans-serif;
-            font-size: 1rem;
+            font-size: 0.9rem;
             color: var(--cyber-orange);
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .control-title::before {
@@ -565,29 +448,28 @@
             animation: blink 1s infinite;
         }
 
-        .control-title .en {
-            font-size: 0.7rem;
-            color: #666;
-            margin-left: 10px;
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
         }
 
         .question-input {
             width: 100%;
-            padding: 15px 20px;
+            padding: 12px 15px;
             background: rgba(0, 255, 255, 0.05);
             border: 1px solid var(--cyber-cyan-dim);
-            border-radius: 8px;
+            border-radius: 6px;
             color: var(--cyber-cyan);
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-family: 'Noto Sans TC', sans-serif;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             transition: all 0.3s ease;
         }
 
         .question-input:focus {
             outline: none;
             border-color: var(--cyber-cyan);
-            box-shadow: 0 0 25px var(--cyber-cyan-dim);
+            box-shadow: 0 0 20px var(--cyber-cyan-dim);
         }
 
         .question-input::placeholder {
@@ -602,14 +484,14 @@
 
         .btn {
             flex: 1;
-            min-width: 150px;
-            padding: 15px 20px;
+            min-width: 120px;
+            padding: 14px 18px;
             background: linear-gradient(135deg, transparent, rgba(0, 255, 255, 0.1));
             border: 2px solid var(--cyber-cyan);
-            border-radius: 8px;
+            border-radius: 6px;
             color: var(--cyber-cyan);
             font-family: 'Orbitron', sans-serif;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             cursor: pointer;
             position: relative;
             overflow: hidden;
@@ -627,63 +509,42 @@
             transition: left 0.5s ease;
         }
 
-        .btn:hover::before {
-            left: 100%;
-        }
+        .btn:hover::before { left: 100%; }
 
         .btn:hover {
             background: rgba(0, 255, 255, 0.2);
-            box-shadow: 0 0 30px var(--cyber-cyan-dim);
+            box-shadow: 0 0 25px var(--cyber-cyan-dim);
             transform: translateY(-2px);
         }
 
-        .btn:active {
-            transform: translateY(0);
-        }
+        .btn:active { transform: translateY(0); }
 
         .btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+            transform: none;
         }
 
         .btn.primary {
-            background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(157, 78, 221, 0.2));
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.15), rgba(157, 78, 221, 0.15));
             border-color: var(--cyber-purple);
-        }
-
-        .btn .btn-text {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 3px;
-        }
-
-        .btn .btn-text .zh {
-            font-size: 0.9rem;
-        }
-
-        .btn .btn-text .en {
-            font-size: 0.6rem;
-            opacity: 0.7;
         }
 
         /* Reading Result */
         .reading-result {
             background: var(--bg-panel);
             border: 1px solid var(--cyber-purple);
-            border-radius: 12px;
-            padding: 25px;
-            margin-top: 30px;
+            border-radius: 10px;
+            padding: 20px;
             display: none;
-            animation: fadeInUp 0.6s ease;
+            animation: fadeInUp 0.5s ease;
+            backdrop-filter: blur(10px);
         }
 
-        .reading-result.show {
-            display: block;
-        }
+        .reading-result.show { display: block; }
 
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
+            from { opacity: 0; transform: translateY(25px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
@@ -691,41 +552,34 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             flex-wrap: wrap;
             gap: 10px;
         }
 
         .reading-title {
             font-family: 'Orbitron', sans-serif;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: var(--cyber-purple);
-        }
-
-        .reading-title .en {
-            font-size: 0.7rem;
-            color: #888;
-            display: block;
-            margin-top: 3px;
         }
 
         .action-buttons {
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
 
         .btn-action {
-            padding: 10px 15px;
+            padding: 8px 12px;
             background: transparent;
             border: 1px solid var(--cyber-orange);
-            border-radius: 5px;
+            border-radius: 4px;
             color: var(--cyber-orange);
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             cursor: pointer;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 4px;
         }
 
         .btn-action:hover {
@@ -734,251 +588,209 @@
         }
 
         .btn-action svg {
-            width: 16px;
-            height: 16px;
-        }
-
-        .reading-content {
-            line-height: 1.8;
-            color: #ccc;
+            width: 14px;
+            height: 14px;
         }
 
         .reading-section {
-            margin-bottom: 20px;
-            padding: 15px;
+            margin-bottom: 15px;
+            padding: 12px;
             background: rgba(0, 255, 255, 0.03);
-            border-radius: 8px;
+            border-radius: 6px;
             border-left: 3px solid var(--cyber-cyan);
         }
 
         .reading-section h4 {
             color: var(--cyber-cyan);
             font-family: 'Orbitron', sans-serif;
-            font-size: 0.9rem;
-            margin-bottom: 8px;
-        }
-
-        .reading-section h4 .en {
-            font-size: 0.65rem;
-            color: #666;
-            margin-left: 10px;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
         }
 
         .reading-section p {
             color: #aaa;
-            font-size: 0.9rem;
-        }
-
-        .reading-section .en-text {
-            color: #777;
-            font-size: 0.8rem;
-            font-style: italic;
-            margin-top: 5px;
+            font-size: 0.85rem;
+            line-height: 1.6;
         }
 
         .summary-box {
             background: linear-gradient(135deg, rgba(157, 78, 221, 0.1), rgba(0, 255, 255, 0.1));
             border: 1px solid var(--cyber-purple);
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
         }
 
         .summary-box h4 {
             color: var(--cyber-gold);
             font-family: 'Orbitron', sans-serif;
-            font-size: 1rem;
+            font-size: 0.95rem;
             margin-bottom: 10px;
             text-align: center;
         }
 
-        .summary-box h4 .en {
-            font-size: 0.7rem;
-            color: #888;
-            display: block;
-            margin-top: 3px;
-        }
-
         .summary-text {
             text-align: center;
-            font-size: 1rem;
+            font-size: 0.9rem;
             color: var(--cyber-cyan);
             line-height: 1.6;
         }
 
-        .summary-text .en-text {
-            color: #888;
-            font-size: 0.85rem;
-            margin-top: 10px;
-            font-style: italic;
-        }
-
         /* Print Area */
-        #printArea {
-            display: none;
-        }
-
+        #printArea { display: none; }
+        
         #printArea.printing {
             display: block;
             position: fixed;
-            top: 0;
-            left: 0;
+            top: 0; left: 0;
             width: 100%;
             min-height: 100vh;
             background: white;
             color: black;
-            padding: 40px;
+            padding: 30px;
             z-index: 10000;
             overflow: auto;
         }
 
         .print-header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             border-bottom: 2px solid #333;
-            padding-bottom: 20px;
+            padding-bottom: 15px;
         }
 
-        .print-header h1 {
-            font-size: 24px;
-            margin-bottom: 5px;
-        }
-
-        .print-header p {
-            color: #666;
-        }
+        .print-header h1 { font-size: 20px; margin-bottom: 5px; }
+        .print-header p { color: #666; font-size: 12px; }
 
         .print-cards {
             display: flex;
             justify-content: center;
-            gap: 20px;
-            margin: 30px 0;
+            gap: 15px;
+            margin: 20px 0;
         }
 
         .print-card {
-            width: 120px;
-            padding: 15px;
+            width: 100px;
+            padding: 12px;
             border: 2px solid #333;
-            border-radius: 10px;
+            border-radius: 8px;
             text-align: center;
         }
 
-        .print-card .symbol {
-            font-size: 40px;
-            margin: 10px 0;
-        }
-
-        .print-card .name {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
+        .print-card .symbol { font-size: 35px; margin: 8px 0; }
+        .print-card .name { font-weight: bold; font-size: 12px; }
+        .print-card .pos { font-size: 10px; color: #666; }
 
         .print-section {
-            margin: 20px 0;
-            padding: 15px;
+            margin: 15px 0;
+            padding: 12px;
             background: #f5f5f5;
-            border-radius: 8px;
+            border-radius: 6px;
         }
 
         .print-section h3 {
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             color: #333;
+            font-size: 14px;
         }
+
+        .print-section p { font-size: 12px; line-height: 1.5; }
 
         .print-summary {
-            margin-top: 30px;
-            padding: 20px;
+            margin-top: 20px;
+            padding: 15px;
             background: #e8e8e8;
-            border-radius: 10px;
+            border-radius: 8px;
             text-align: center;
         }
+
+        .print-summary h3 { font-size: 14px; margin-bottom: 10px; }
+        .print-summary p { font-size: 12px; }
 
         .print-footer {
-            margin-top: 40px;
+            margin-top: 30px;
             text-align: center;
             color: #888;
-            font-size: 12px;
+            font-size: 10px;
         }
 
-        /* Floating Footer */
+        /* Footer */
         .floating-footer {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
             background: linear-gradient(180deg, transparent, rgba(10, 10, 15, 0.98));
-            padding: 15px 20px;
+            padding: 12px 15px;
             z-index: 1000;
             backdrop-filter: blur(10px);
         }
 
         .footer-content {
-            max-width: 1200px;
+            max-width: 900px;
             margin: 0 auto;
             display: flex;
             justify-content: center;
             align-items: center;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 12px;
         }
 
         .footer-text {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--cyber-cyan);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .footer-text .emoji {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             animation: bounce 2s ease-in-out infinite;
         }
 
         @keyframes bounce {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
+            50% { transform: translateY(-4px); }
         }
 
         .footer-link {
             color: var(--cyber-orange);
             text-decoration: none;
-            padding: 8px 18px;
+            padding: 6px 14px;
             border: 1px solid var(--cyber-orange);
-            border-radius: 20px;
+            border-radius: 15px;
             font-family: 'Orbitron', sans-serif;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .footer-link:hover {
             background: var(--cyber-orange);
             color: #000;
-            box-shadow: 0 0 20px var(--cyber-orange);
+            box-shadow: 0 0 15px var(--cyber-orange);
         }
 
         .footer-link svg {
-            width: 14px;
-            height: 14px;
+            width: 12px;
+            height: 12px;
         }
 
-        /* Loading Overlay */
+        /* Loading */
         .loading-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             background: var(--bg-dark);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 10000;
-            transition: opacity 0.8s ease;
+            transition: opacity 0.6s ease;
         }
 
         .loading-overlay.hidden {
@@ -987,132 +799,57 @@
         }
 
         .loading-spinner {
-            width: 80px;
-            height: 80px;
+            width: 60px;
+            height: 60px;
             border: 3px solid var(--cyber-cyan-dim);
             border-top-color: var(--cyber-cyan);
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .loading-text {
             font-family: 'Orbitron', sans-serif;
             color: var(--cyber-cyan);
-            margin-top: 20px;
-            font-size: 0.9rem;
+            margin-top: 15px;
+            font-size: 0.85rem;
         }
 
-        .loading-text .en {
-            font-size: 0.7rem;
-            color: #666;
-            display: block;
-            margin-top: 5px;
-        }
-
-        /* Energy Burst Effect */
+        /* Energy Burst */
         .energy-burst {
             position: fixed;
-            top: 50%;
-            left: 50%;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 0;
-            height: 0;
+            width: 0; height: 0;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(0,255,255,0.8) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(0,255,255,0.7) 0%, transparent 70%);
             pointer-events: none;
-            z-index: 200;
+            z-index: 100;
             opacity: 0;
         }
 
         .energy-burst.active {
-            animation: energyBurst 1s ease-out forwards;
+            animation: energyBurst 0.8s ease-out forwards;
         }
 
         @keyframes energyBurst {
             0% { width: 0; height: 0; opacity: 1; }
-            100% { width: 150vmax; height: 150vmax; opacity: 0; }
+            100% { width: 120vmax; height: 120vmax; opacity: 0; }
         }
 
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .camera-status {
-                position: relative;
-                top: auto;
-                left: auto;
-                max-width: 100%;
-                margin-bottom: 15px;
-            }
-
-            .header {
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
-            }
-
-            .time-display {
-                text-align: center;
-                width: 100%;
-            }
-
-            .card-deck {
-                gap: 10px;
-            }
-
-            .tarot-card {
-                width: 100px;
-                height: 170px;
-            }
-
-            .card-image {
-                font-size: 2.5rem;
-            }
-
-            .btn-group {
-                flex-direction: column;
-            }
-
-            .action-buttons {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .reading-header {
-                flex-direction: column;
-                text-align: center;
-            }
-        }
-
-        /* Corner Decorations */
-        .corner {
-            position: fixed;
-            width: 60px;
-            height: 60px;
-            border: 2px solid var(--cyber-cyan-dim);
-            pointer-events: none;
-            z-index: 5;
-        }
-
-        .corner.tl { top: 10px; left: 10px; border-right: none; border-bottom: none; }
-        .corner.tr { top: 10px; right: 10px; border-left: none; border-bottom: none; }
-        .corner.bl { bottom: 80px; left: 10px; border-right: none; border-top: none; }
-        .corner.br { bottom: 80px; right: 10px; border-left: none; border-top: none; }
-
-        /* Toast Notification */
+        /* Toast */
         .toast {
             position: fixed;
-            bottom: 100px;
+            bottom: 80px;
             left: 50%;
-            transform: translateX(-50%) translateY(100px);
+            transform: translateX(-50%) translateY(50px);
             background: var(--bg-panel);
             border: 1px solid var(--cyber-cyan);
-            border-radius: 8px;
-            padding: 15px 25px;
+            border-radius: 6px;
+            padding: 12px 20px;
             color: var(--cyber-cyan);
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             z-index: 2000;
             opacity: 0;
             transition: all 0.3s ease;
@@ -1123,16 +860,35 @@
             transform: translateX(-50%) translateY(0);
             opacity: 1;
         }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .header { flex-direction: column; align-items: flex-start; }
+            .status-bar { width: 100%; justify-content: space-between; }
+            .btn-group { flex-direction: column; }
+            .action-buttons { width: 100%; justify-content: center; }
+        }
+
+        /* Corner Decorations */
+        .corner {
+            position: fixed;
+            width: 40px;
+            height: 40px;
+            border: 2px solid var(--cyber-cyan-dim);
+            pointer-events: none;
+            z-index: 5;
+        }
+        .corner.tl { top: 8px; left: 8px; border-right: none; border-bottom: none; }
+        .corner.tr { top: 8px; right: 8px; border-left: none; border-bottom: none; }
+        .corner.bl { bottom: 70px; left: 8px; border-right: none; border-top: none; }
+        .corner.br { bottom: 70px; right: 8px; border-left: none; border-top: none; }
     </style>
 </head>
 <body>
     <!-- Loading -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner"></div>
-        <div class="loading-text">
-            系統初始化中...
-            <span class="en">Initializing System...</span>
-        </div>
+        <div class="loading-text" id="loadingText">系統初始化中...</div>
     </div>
 
     <!-- Scanlines -->
@@ -1141,10 +897,10 @@
     <!-- Particle Canvas -->
     <canvas id="particleCanvas"></canvas>
 
-    <!-- Energy Burst Effect -->
+    <!-- Energy Burst -->
     <div class="energy-burst" id="energyBurst"></div>
 
-    <!-- Corner Decorations -->
+    <!-- Corners -->
     <div class="corner tl"></div>
     <div class="corner tr"></div>
     <div class="corner bl"></div>
@@ -1164,7 +920,7 @@
     <!-- Print Area -->
     <div id="printArea">
         <div class="print-header">
-            <h1>PM里長伯塔羅牌 | PM Mayors Tarot</h1>
+            <h1 id="printTitle">PM里長伯塔羅牌</h1>
             <p id="printDate"></p>
         </div>
         <div id="printQuestion"></div>
@@ -1173,118 +929,82 @@
         <div class="print-summary" id="printSummary"></div>
         <div class="print-footer">
             <p>🏘️ 里長伯幫助您用AI玩轉敏捷</p>
-            <p>Provided by Tao Chun Liu (PM Mayors) | linkedin.com/in/taochunliu</p>
+            <p>Provided by Tao Chun Liu (PM Mayors)</p>
+            <p>linkedin.com/in/taochunliu</p>
         </div>
     </div>
 
-    <!-- Main Container -->
+    <!-- Main -->
     <div class="main-container" id="mainContent">
-        <!-- Header -->
         <header class="header">
             <div class="logo-section">
                 <div class="logo-container">
-                    <img src="./logo.png" alt="PM Mayors" id="logoImg" style="display: none;">
-                    <div class="logo-fallback" id="logoFallback">
+                    <img src="./logo.png" alt="PM Mayors" id="logoImg" onerror="this.style.display='none';document.getElementById('logoFallback').style.display='block';">
+                    <div class="logo-fallback" id="logoFallback" style="display:none;">
                         <div class="pm">PM</div>
                         <div class="mayors">MAYORS</div>
                     </div>
                 </div>
                 <div class="title-section">
-                    <h1>PM里長伯塔羅牌</h1>
+                    <h1 id="mainTitle">PM里長伯塔羅牌</h1>
                     <div class="subtitle">PM MAYORS ALGORITHMIC TAROT</div>
                 </div>
             </div>
-            <div class="time-display">
-                <div class="current-time" id="currentTime">00:00:00</div>
-                <div class="current-date" id="currentDate">2025-01-01</div>
+            
+            <div class="status-bar">
+                <div class="lang-toggle">
+                    <button class="lang-btn active" id="btnZh" onclick="setLang('zh')">中文</button>
+                    <button class="lang-btn" id="btnEn" onclick="setLang('en')">EN</button>
+                </div>
+                <div class="time-display" id="currentTime">00:00:00</div>
+                <div class="hand-indicator">
+                    <span id="handLabel">🖐️</span>
+                    <div class="hand-dot" id="handDot"></div>
+                    <span id="handStatus">--</span>
+                </div>
             </div>
         </header>
 
-        <!-- Camera Status -->
-        <div class="camera-status" id="cameraStatus">
-            <div class="status-title">
-                系統狀態 <span style="font-size:0.6rem;color:#666">System Status</span>
-            </div>
-            <div class="status-item">
-                <span class="label">攝影機 Camera</span>
-                <span class="value" id="cameraValue">檢測中...</span>
-            </div>
-            <div class="status-item">
-                <span class="label">手勢追蹤 Gesture</span>
-                <span class="value" id="gestureValue">待機中</span>
-            </div>
-            <div class="status-item">
-                <span class="label">算法引擎 Engine</span>
-                <span class="value active">就緒 Ready</span>
-            </div>
-            <div class="camera-note" id="cameraNote">
-                📝 手部追蹤需要HTTPS環境（部署到Vercel後即可使用）<br>
-                Hand tracking requires HTTPS (deploy to Vercel to enable)
-            </div>
-        </div>
-
-        <!-- Tarot Section -->
         <section class="tarot-section">
             <div class="tarot-header">
-                <h2>◈ 算法塔羅占卜 ◈</h2>
-                <div class="subtitle-en">Algorithmic Tarot Divination</div>
-                <p>結合AI運算與古老智慧的未來占卜系統</p>
-                <p style="font-size:0.75rem;color:#555;">A futuristic divination system combining AI and ancient wisdom</p>
+                <h2 id="tarotTitle">◈ 算法塔羅占卜 ◈</h2>
+                <p id="tarotSubtitle">結合AI運算與古老智慧的未來占卜系統</p>
             </div>
 
-            <!-- Card Deck -->
             <div class="card-deck" id="cardDeck"></div>
 
-            <!-- Control Panel -->
             <div class="control-panel">
-                <div class="control-title">
-                    占卜控制台
-                    <span class="en">Divination Console</span>
-                </div>
-                <input 
-                    type="text" 
-                    class="question-input" 
-                    id="questionInput" 
-                    placeholder="輸入您的問題... / Enter your question..."
-                >
+                <div class="control-title" id="controlTitle">占卜控制台</div>
+                <input type="text" class="question-input" id="questionInput" placeholder="輸入您的問題...">
                 <div class="btn-group">
                     <button class="btn primary" id="btnDraw">
-                        <span class="btn-text">
-                            <span class="zh">◆ 啟動塔羅算法 ◆</span>
-                            <span class="en">Activate Tarot Algorithm</span>
-                        </span>
+                        <span id="btnDrawText">◆ 啟動塔羅算法 ◆</span>
                     </button>
                     <button class="btn" id="btnReset">
-                        <span class="btn-text">
-                            <span class="zh">重置 Reset</span>
-                        </span>
+                        <span id="btnResetText">重置</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Reading Result -->
             <div class="reading-result" id="readingResult">
                 <div class="reading-header">
-                    <div class="reading-title">
-                        ◈ 算法解讀結果
-                        <span class="en">Algorithm Reading Results</span>
-                    </div>
+                    <div class="reading-title" id="readingTitle">◈ 算法解讀結果</div>
                     <div class="action-buttons">
-                        <button class="btn-action" id="btnSaveImage" title="儲存圖片 Save Image">
+                        <button class="btn-action" id="btnSaveImage" title="Save Image">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <rect x="3" y="3" width="18" height="18" rx="2"/>
                                 <circle cx="8.5" cy="8.5" r="1.5"/>
                                 <path d="M21 15l-5-5L5 21"/>
                             </svg>
-                            <span class="mobile-hide">圖片</span>
+                            <span id="btnImageText">圖片</span>
                         </button>
-                        <button class="btn-action" id="btnPrint" title="列印PDF Print PDF">
+                        <button class="btn-action" id="btnPrint" title="Print PDF">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M6 9V2h12v7"/>
                                 <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
                                 <rect x="6" y="14" width="12" height="8"/>
                             </svg>
-                            <span class="mobile-hide">PDF</span>
+                            <span id="btnPrintText">PDF</span>
                         </button>
                     </div>
                 </div>
@@ -1293,12 +1013,12 @@
         </section>
     </div>
 
-    <!-- Floating Footer -->
+    <!-- Footer -->
     <footer class="floating-footer">
         <div class="footer-content">
             <div class="footer-text">
                 <span class="emoji">🏘️</span>
-                <span>里長伯幫助您用AI玩轉敏捷</span>
+                <span id="footerText">里長伯幫助您用AI玩轉敏捷</span>
             </div>
             <a href="https://www.linkedin.com/in/taochunliu/" target="_blank" rel="noopener noreferrer" class="footer-link">
                 <svg viewBox="0 0 24 24" fill="currentColor">
@@ -1310,74 +1030,152 @@
     </footer>
 
     <script>
-        // ==================== DATA ====================
-        const majorArcana = [
-            { number: 0, nameZh: '愚者', nameEn: 'The Fool', symbol: '🃏', meaningZh: '新開始、冒險、純真', meaningEn: 'New beginnings, adventure, innocence', color: '#FFD700' },
-            { number: 1, nameZh: '魔術師', nameEn: 'The Magician', symbol: '🎩', meaningZh: '創造力、技能、意志', meaningEn: 'Creativity, skill, willpower', color: '#FF6B35' },
-            { number: 2, nameZh: '女祭司', nameEn: 'High Priestess', symbol: '🌙', meaningZh: '直覺、神秘、內在智慧', meaningEn: 'Intuition, mystery, inner wisdom', color: '#9D4EDD' },
-            { number: 3, nameZh: '皇后', nameEn: 'The Empress', symbol: '👑', meaningZh: '豐盛、母性、創造', meaningEn: 'Abundance, fertility, creation', color: '#00FF00' },
-            { number: 4, nameZh: '皇帝', nameEn: 'The Emperor', symbol: '⚔️', meaningZh: '權威、結構、領導', meaningEn: 'Authority, structure, leadership', color: '#FF3366' },
-            { number: 5, nameZh: '教皇', nameEn: 'The Hierophant', symbol: '⛪', meaningZh: '傳統、指導、信仰', meaningEn: 'Tradition, guidance, faith', color: '#00FFFF' },
-            { number: 6, nameZh: '戀人', nameEn: 'The Lovers', symbol: '💕', meaningZh: '愛情、選擇、和諧', meaningEn: 'Love, choices, harmony', color: '#FF69B4' },
-            { number: 7, nameZh: '戰車', nameEn: 'The Chariot', symbol: '🏎️', meaningZh: '決心、勝利、控制', meaningEn: 'Determination, victory, control', color: '#FFA500' },
-            { number: 8, nameZh: '力量', nameEn: 'Strength', symbol: '🦁', meaningZh: '勇氣、耐心、內在力量', meaningEn: 'Courage, patience, inner strength', color: '#FFD700' },
-            { number: 9, nameZh: '隱士', nameEn: 'The Hermit', symbol: '🏔️', meaningZh: '內省、尋求、智慧', meaningEn: 'Introspection, seeking, wisdom', color: '#4169E1' },
-            { number: 10, nameZh: '命運之輪', nameEn: 'Wheel of Fortune', symbol: '🎡', meaningZh: '命運、轉變、機遇', meaningEn: 'Destiny, change, opportunity', color: '#9400D3' },
-            { number: 11, nameZh: '正義', nameEn: 'Justice', symbol: '⚖️', meaningZh: '公平、真相、因果', meaningEn: 'Fairness, truth, karma', color: '#C0C0C0' },
-            { number: 12, nameZh: '倒吊人', nameEn: 'The Hanged Man', symbol: '🙃', meaningZh: '犧牲、新視角、等待', meaningEn: 'Sacrifice, new perspective, waiting', color: '#4682B4' },
-            { number: 13, nameZh: '死神', nameEn: 'Death', symbol: '💀', meaningZh: '結束、轉化、重生', meaningEn: 'Endings, transformation, rebirth', color: '#2F4F4F' },
-            { number: 14, nameZh: '節制', nameEn: 'Temperance', symbol: '🏺', meaningZh: '平衡、耐心、適度', meaningEn: 'Balance, patience, moderation', color: '#20B2AA' },
-            { number: 15, nameZh: '惡魔', nameEn: 'The Devil', symbol: '😈', meaningZh: '束縛、誘惑、陰暗面', meaningEn: 'Bondage, temptation, shadow self', color: '#8B0000' },
-            { number: 16, nameZh: '高塔', nameEn: 'The Tower', symbol: '🗼', meaningZh: '突變、覺醒、解放', meaningEn: 'Upheaval, awakening, liberation', color: '#FF4500' },
-            { number: 17, nameZh: '星星', nameEn: 'The Star', symbol: '⭐', meaningZh: '希望、靈感、平靜', meaningEn: 'Hope, inspiration, serenity', color: '#00CED1' },
-            { number: 18, nameZh: '月亮', nameEn: 'The Moon', symbol: '🌕', meaningZh: '幻象、直覺、恐懼', meaningEn: 'Illusion, intuition, fear', color: '#E6E6FA' },
-            { number: 19, nameZh: '太陽', nameEn: 'The Sun', symbol: '☀️', meaningZh: '成功、喜悅、活力', meaningEn: 'Success, joy, vitality', color: '#FFD700' },
-            { number: 20, nameZh: '審判', nameEn: 'Judgement', symbol: '📯', meaningZh: '覺醒、重生、召喚', meaningEn: 'Awakening, rebirth, calling', color: '#DAA520' },
-            { number: 21, nameZh: '世界', nameEn: 'The World', symbol: '🌍', meaningZh: '完成、整合、成就', meaningEn: 'Completion, integration, achievement', color: '#00FF7F' }
-        ];
+        // ==================== LANGUAGE DATA ====================
+        const i18n = {
+            zh: {
+                mainTitle: 'PM里長伯塔羅牌',
+                loadingText: '系統初始化中...',
+                tarotTitle: '◈ 算法塔羅占卜 ◈',
+                tarotSubtitle: '結合AI運算與古老智慧的未來占卜系統',
+                controlTitle: '占卜控制台',
+                placeholder: '輸入您的問題...',
+                btnDraw: '◆ 啟動塔羅算法 ◆',
+                btnReset: '重置',
+                readingTitle: '◈ 算法解讀結果',
+                btnImage: '圖片',
+                btnPrint: 'PDF',
+                footerText: '里長伯幫助您用AI玩轉敏捷',
+                handDetected: '偵測中',
+                handNone: '無偵測',
+                positions: ['過去', '現在', '未來'],
+                question: '問題',
+                summary: '⭐ 總結解讀',
+                awaiting: '等待揭示',
+                savingImage: '正在生成圖片...',
+                pleaseDrawFirst: '請先進行占卜',
+                printTitle: 'PM里長伯塔羅牌'
+            },
+            en: {
+                mainTitle: 'PM Mayors Tarot',
+                loadingText: 'Initializing...',
+                tarotTitle: '◈ Algorithmic Tarot ◈',
+                tarotSubtitle: 'A futuristic divination system combining AI and ancient wisdom',
+                controlTitle: 'Divination Console',
+                placeholder: 'Enter your question...',
+                btnDraw: '◆ Activate Algorithm ◆',
+                btnReset: 'Reset',
+                readingTitle: '◈ Reading Results',
+                btnImage: 'Image',
+                btnPrint: 'PDF',
+                footerText: 'PM Mayors helps you master Agile with AI',
+                handDetected: 'Detected',
+                handNone: 'None',
+                positions: ['Past', 'Present', 'Future'],
+                question: 'Question',
+                summary: '⭐ Summary',
+                awaiting: 'Awaiting',
+                savingImage: 'Generating image...',
+                pleaseDrawFirst: 'Please draw cards first',
+                printTitle: 'PM Mayors Tarot'
+            }
+        };
 
-        const positions = [
-            { zh: '過去', en: 'Past' },
-            { zh: '現在', en: 'Present' },
-            { zh: '未來', en: 'Future' }
+        let currentLang = 'zh';
+
+        // ==================== TAROT DATA ====================
+        const majorArcana = [
+            { number: 0, zh: '愚者', en: 'The Fool', symbol: '🃏', meaningZh: '新開始、冒險、純真', meaningEn: 'New beginnings, adventure, innocence', color: '#FFD700' },
+            { number: 1, zh: '魔術師', en: 'The Magician', symbol: '🎩', meaningZh: '創造力、技能、意志', meaningEn: 'Creativity, skill, willpower', color: '#FF6B35' },
+            { number: 2, zh: '女祭司', en: 'High Priestess', symbol: '🌙', meaningZh: '直覺、神秘、內在智慧', meaningEn: 'Intuition, mystery, inner wisdom', color: '#9D4EDD' },
+            { number: 3, zh: '皇后', en: 'The Empress', symbol: '👑', meaningZh: '豐盛、母性、創造', meaningEn: 'Abundance, fertility, creation', color: '#00FF00' },
+            { number: 4, zh: '皇帝', en: 'The Emperor', symbol: '⚔️', meaningZh: '權威、結構、領導', meaningEn: 'Authority, structure, leadership', color: '#FF3366' },
+            { number: 5, zh: '教皇', en: 'The Hierophant', symbol: '⛪', meaningZh: '傳統、指導、信仰', meaningEn: 'Tradition, guidance, faith', color: '#00FFFF' },
+            { number: 6, zh: '戀人', en: 'The Lovers', symbol: '💕', meaningZh: '愛情、選擇、和諧', meaningEn: 'Love, choices, harmony', color: '#FF69B4' },
+            { number: 7, zh: '戰車', en: 'The Chariot', symbol: '🏎️', meaningZh: '決心、勝利、控制', meaningEn: 'Determination, victory, control', color: '#FFA500' },
+            { number: 8, zh: '力量', en: 'Strength', symbol: '🦁', meaningZh: '勇氣、耐心、內在力量', meaningEn: 'Courage, patience, inner strength', color: '#FFD700' },
+            { number: 9, zh: '隱士', en: 'The Hermit', symbol: '🏔️', meaningZh: '內省、尋求、智慧', meaningEn: 'Introspection, seeking, wisdom', color: '#4169E1' },
+            { number: 10, zh: '命運之輪', en: 'Wheel of Fortune', symbol: '🎡', meaningZh: '命運、轉變、機遇', meaningEn: 'Destiny, change, opportunity', color: '#9400D3' },
+            { number: 11, zh: '正義', en: 'Justice', symbol: '⚖️', meaningZh: '公平、真相、因果', meaningEn: 'Fairness, truth, karma', color: '#C0C0C0' },
+            { number: 12, zh: '倒吊人', en: 'The Hanged Man', symbol: '🙃', meaningZh: '犧牲、新視角、等待', meaningEn: 'Sacrifice, new perspective, waiting', color: '#4682B4' },
+            { number: 13, zh: '死神', en: 'Death', symbol: '💀', meaningZh: '結束、轉化、重生', meaningEn: 'Endings, transformation, rebirth', color: '#2F4F4F' },
+            { number: 14, zh: '節制', en: 'Temperance', symbol: '🏺', meaningZh: '平衡、耐心、適度', meaningEn: 'Balance, patience, moderation', color: '#20B2AA' },
+            { number: 15, zh: '惡魔', en: 'The Devil', symbol: '😈', meaningZh: '束縛、誘惑、陰暗面', meaningEn: 'Bondage, temptation, shadow self', color: '#8B0000' },
+            { number: 16, zh: '高塔', en: 'The Tower', symbol: '🗼', meaningZh: '突變、覺醒、解放', meaningEn: 'Upheaval, awakening, liberation', color: '#FF4500' },
+            { number: 17, zh: '星星', en: 'The Star', symbol: '⭐', meaningZh: '希望、靈感、平靜', meaningEn: 'Hope, inspiration, serenity', color: '#00CED1' },
+            { number: 18, zh: '月亮', en: 'The Moon', symbol: '🌕', meaningZh: '幻象、直覺、恐懼', meaningEn: 'Illusion, intuition, fear', color: '#E6E6FA' },
+            { number: 19, zh: '太陽', en: 'The Sun', symbol: '☀️', meaningZh: '成功、喜悅、活力', meaningEn: 'Success, joy, vitality', color: '#FFD700' },
+            { number: 20, zh: '審判', en: 'Judgement', symbol: '📯', meaningZh: '覺醒、重生、召喚', meaningEn: 'Awakening, rebirth, calling', color: '#DAA520' },
+            { number: 21, zh: '世界', en: 'The World', symbol: '🌍', meaningZh: '完成、整合、成就', meaningEn: 'Completion, integration, achievement', color: '#00FF7F' }
         ];
 
         // ==================== STATE ====================
         let selectedCards = [];
         let isDrawing = false;
         let particles = [];
+        let handLandmarker = null;
+        let handDetected = false;
 
-        // ==================== PARTICLE SYSTEM ====================
+        // ==================== LANGUAGE ====================
+        function setLang(lang) {
+            currentLang = lang;
+            document.getElementById('btnZh').classList.toggle('active', lang === 'zh');
+            document.getElementById('btnEn').classList.toggle('active', lang === 'en');
+            updateUI();
+            if (selectedCards.length > 0) {
+                generateReading();
+            }
+        }
+
+        function t(key) {
+            return i18n[currentLang][key] || key;
+        }
+
+        function updateUI() {
+            document.getElementById('mainTitle').textContent = t('mainTitle');
+            document.getElementById('tarotTitle').textContent = t('tarotTitle');
+            document.getElementById('tarotSubtitle').textContent = t('tarotSubtitle');
+            document.getElementById('controlTitle').textContent = t('controlTitle');
+            document.getElementById('questionInput').placeholder = t('placeholder');
+            document.getElementById('btnDrawText').textContent = t('btnDraw');
+            document.getElementById('btnResetText').textContent = t('btnReset');
+            document.getElementById('readingTitle').textContent = t('readingTitle');
+            document.getElementById('btnImageText').textContent = t('btnImage');
+            document.getElementById('btnPrintText').textContent = t('btnPrint');
+            document.getElementById('footerText').textContent = t('footerText');
+            document.getElementById('handStatus').textContent = handDetected ? t('handDetected') : t('handNone');
+            
+            // Update cards if not flipped
+            const cards = document.querySelectorAll('.tarot-card:not(.flipped)');
+            cards.forEach((card, i) => {
+                const nameEl = card.querySelector('.card-name-text');
+                if (nameEl) nameEl.textContent = t('awaiting');
+            });
+        }
+
+        // ==================== PARTICLES ====================
         const particleCanvas = document.getElementById('particleCanvas');
         const pCtx = particleCanvas.getContext('2d');
 
-        function resizeParticleCanvas() {
+        function resizeCanvas() {
             particleCanvas.width = window.innerWidth;
             particleCanvas.height = window.innerHeight;
         }
-        resizeParticleCanvas();
-        window.addEventListener('resize', resizeParticleCanvas);
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
 
         class Particle {
-            constructor(x, y, color, type = 'normal') {
+            constructor(x, y, color) {
                 this.x = x;
                 this.y = y;
                 this.color = color;
-                this.type = type;
-                this.size = Math.random() * 5 + 2;
-                this.speedX = (Math.random() - 0.5) * 15;
-                this.speedY = (Math.random() - 0.5) * 15;
+                this.size = Math.random() * 4 + 1;
+                this.speedX = (Math.random() - 0.5) * 12;
+                this.speedY = (Math.random() - 0.5) * 12;
                 this.life = 1;
                 this.decay = Math.random() * 0.02 + 0.01;
-                this.gravity = type === 'spark' ? 0.1 : 0;
-                this.trail = [];
             }
 
             update() {
-                this.trail.push({ x: this.x, y: this.y, life: this.life });
-                if (this.trail.length > 10) this.trail.shift();
-
-                this.speedY += this.gravity;
                 this.x += this.speedX;
                 this.y += this.speedY;
                 this.life -= this.decay;
@@ -1386,57 +1184,29 @@
             }
 
             draw(ctx) {
-                // Draw trail
-                this.trail.forEach((point, i) => {
-                    ctx.beginPath();
-                    ctx.arc(point.x, point.y, this.size * (i / this.trail.length) * point.life, 0, Math.PI * 2);
-                    ctx.fillStyle = this.color.replace('1)', `${point.life * 0.3})`);
-                    ctx.fill();
-                });
-
-                // Draw main particle
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size * this.life, 0, Math.PI * 2);
                 ctx.fillStyle = this.color.replace('1)', `${this.life})`);
-                ctx.fill();
-
-                // Glow effect
-                ctx.shadowBlur = 20;
+                ctx.shadowBlur = 15;
                 ctx.shadowColor = this.color;
                 ctx.fill();
                 ctx.shadowBlur = 0;
             }
         }
 
-        function createExplosion(x, y, count = 50, color = 'rgba(0, 255, 255, 1)') {
+        function createExplosion(x, y, count = 40, color = 'rgba(0, 255, 255, 1)') {
             for (let i = 0; i < count; i++) {
-                particles.push(new Particle(x, y, color, 'spark'));
-            }
-        }
-
-        function createMagicCircle(x, y) {
-            const colors = ['rgba(0, 255, 255, 1)', 'rgba(255, 215, 0, 1)', 'rgba(157, 78, 221, 1)'];
-            for (let i = 0; i < 100; i++) {
-                const angle = (i / 100) * Math.PI * 2;
-                const radius = 100 + Math.random() * 50;
-                const px = x + Math.cos(angle) * radius;
-                const py = y + Math.sin(angle) * radius;
-                const particle = new Particle(px, py, colors[i % colors.length]);
-                particle.speedX = (x - px) * 0.05;
-                particle.speedY = (y - py) * 0.05;
-                particles.push(particle);
+                particles.push(new Particle(x, y, color));
             }
         }
 
         function animateParticles() {
             pCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
-            
             particles = particles.filter(p => p.life > 0);
             particles.forEach(p => {
                 p.update();
                 p.draw(pCtx);
             });
-
             requestAnimationFrame(animateParticles);
         }
         animateParticles();
@@ -1455,12 +1225,11 @@
                         <div class="card-pattern">✧</div>
                     </div>
                     <div class="card-face card-front">
-                        <div class="card-position">${positions[i].zh} | ${positions[i].en}</div>
+                        <div class="card-position">${t('positions')[i]}</div>
                         <div class="card-number">--</div>
                         <div class="card-image">?</div>
                         <div class="card-name">
-                            <div class="zh">等待揭示</div>
-                            <div class="en">Awaiting Reveal</div>
+                            <div class="card-name-text">${t('awaiting')}</div>
                         </div>
                         <div class="card-meaning">--</div>
                     </div>
@@ -1479,59 +1248,65 @@
 
             // Reset
             const cards = document.querySelectorAll('.tarot-card');
-            cards.forEach(card => {
-                card.classList.remove('flipped', 'reveal');
-            });
+            cards.forEach(card => card.classList.remove('flipped', 'shuffling'));
             document.getElementById('readingResult').classList.remove('show');
 
-            // Energy burst effect
+            // Energy burst
             const burst = document.getElementById('energyBurst');
+            burst.classList.remove('active');
+            void burst.offsetWidth;
             burst.classList.add('active');
-            setTimeout(() => burst.classList.remove('active'), 1000);
 
-            // Create magic circle at center
-            createMagicCircle(window.innerWidth / 2, window.innerHeight / 2);
+            // Center explosion
+            createExplosion(window.innerWidth / 2, window.innerHeight / 2, 60, 'rgba(157, 78, 221, 1)');
 
             // Shuffle animation
-            cards.forEach((card, i) => {
-                setTimeout(() => {
-                    card.classList.add('drawing');
-                    setTimeout(() => card.classList.remove('drawing'), 500);
-                }, i * 200);
-            });
+            for (let i = 0; i < cards.length; i++) {
+                await sleep(150);
+                cards[i].classList.add('shuffling');
+            }
 
-            await sleep(800);
+            await sleep(600);
+
+            // Remove shuffle class
+            cards.forEach(card => card.classList.remove('shuffling'));
 
             // Select random cards
             const shuffled = [...majorArcana].sort(() => Math.random() - 0.5);
             selectedCards = shuffled.slice(0, 3);
 
-            // Reveal cards with effects
+            // Reveal cards one by one
             for (let i = 0; i < 3; i++) {
-                await sleep(800);
+                await sleep(600);
                 const card = cards[i];
                 const cardData = selectedCards[i];
                 
-                // Update card content
+                // Update front face content
                 const front = card.querySelector('.card-front');
+                const name = currentLang === 'zh' ? cardData.zh : cardData.en;
+                const meaning = currentLang === 'zh' ? cardData.meaningZh : cardData.meaningEn;
+                
                 front.innerHTML = `
-                    <div class="card-position">${positions[i].zh} | ${positions[i].en}</div>
+                    <div class="card-position">${t('positions')[i]}</div>
                     <div class="card-number">#${cardData.number}</div>
                     <div class="card-image" style="color: ${cardData.color}">${cardData.symbol}</div>
                     <div class="card-name">
-                        <div class="zh">${cardData.nameZh}</div>
-                        <div class="en">${cardData.nameEn}</div>
+                        <div class="card-name-text">${name}</div>
                     </div>
-                    <div class="card-meaning">${cardData.meaningZh}<br>${cardData.meaningEn}</div>
+                    <div class="card-meaning">${meaning}</div>
                 `;
 
-                // Flip with explosion
-                card.classList.add('reveal');
+                // Flip card
+                card.classList.add('flipped');
+
+                // Explosion effect
                 const rect = card.getBoundingClientRect();
-                createExplosion(rect.left + rect.width / 2, rect.top + rect.height / 2, 30, `rgba(${hexToRgb(cardData.color)}, 1)`);
+                const cx = rect.left + rect.width / 2;
+                const cy = rect.top + rect.height / 2;
+                createExplosion(cx, cy, 35, `rgba(${hexToRgb(cardData.color)}, 1)`);
             }
 
-            await sleep(1000);
+            await sleep(800);
             generateReading();
             
             isDrawing = false;
@@ -1540,75 +1315,62 @@
 
         function hexToRgb(hex) {
             const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-            return result ? 
-                `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : 
-                '0, 255, 255';
+            return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '0, 255, 255';
         }
 
         function sleep(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
         }
 
-        // ==================== GENERATE READING ====================
+        // ==================== READING ====================
         function generateReading() {
-            const question = document.getElementById('questionInput').value || '通用占卜 General Reading';
+            const question = document.getElementById('questionInput').value || (currentLang === 'zh' ? '通用占卜' : 'General Reading');
+            const positions = t('positions');
             
-            const readingsZh = [];
-            const readingsEn = [];
+            let html = `<div class="reading-section"><h4>${t('question')}</h4><p>${question}</p></div>`;
 
             selectedCards.forEach((card, i) => {
-                const posZh = positions[i].zh;
-                const posEn = positions[i].en;
+                const name = currentLang === 'zh' ? card.zh : card.en;
+                const meaning = currentLang === 'zh' ? card.meaningZh : card.meaningEn;
                 
-                const interpretationsZh = {
-                    '過去': `在您的過往經歷中，${card.nameZh}牌的出現象徵著「${card.meaningZh}」的能量一直在影響著您。這段經歷為您現在的處境奠定了基礎。`,
-                    '現在': `此刻，${card.nameZh}牌揭示了您當前的核心能量是「${card.meaningZh}」。這是理解您現況的關鍵訊息。`,
-                    '未來': `展望未來，${card.nameZh}牌預示著「${card.meaningZh}」的能量即將進入您的生命。請敞開心扉迎接這份轉變。`
-                };
+                let interpretation;
+                if (currentLang === 'zh') {
+                    const intros = [
+                        `在您的過往經歷中，${name}牌的出現象徵著「${meaning}」的能量。這段經歷為您現在的處境奠定了基礎。`,
+                        `此刻，${name}牌揭示了您當前的核心能量是「${meaning}」。這是理解您現況的關鍵訊息。`,
+                        `展望未來，${name}牌預示著「${meaning}」的能量即將進入您的生命。請敞開心扉迎接這份轉變。`
+                    ];
+                    interpretation = intros[i];
+                } else {
+                    const intros = [
+                        `In your past, the ${name} card reveals the energy of "${meaning}" has been influencing your journey.`,
+                        `Currently, the ${name} card shows your core energy is "${meaning}". This is key to understanding your present.`,
+                        `Looking ahead, the ${name} indicates "${meaning}" is about to enter your life. Open your heart to this change.`
+                    ];
+                    interpretation = intros[i];
+                }
 
-                const interpretationsEn = {
-                    'Past': `In your past, the ${card.nameEn} card reveals the energy of "${card.meaningEn}" has been influencing your journey. This experience laid the foundation for your current situation.`,
-                    'Present': `Currently, the ${card.nameEn} card shows your core energy is "${card.meaningEn}". This is the key message for understanding your present state.`,
-                    'Future': `Looking ahead, the ${card.nameEn} card indicates the energy of "${card.meaningEn}" is about to enter your life. Open your heart to welcome this transformation.`
-                };
-
-                readingsZh.push({ position: posZh, card: card.nameZh, text: interpretationsZh[posZh] });
-                readingsEn.push({ position: posEn, card: card.nameEn, text: interpretationsEn[posEn] });
-            });
-
-            // Generate summary
-            const summaryZh = `綜合三張牌的訊息：從「${selectedCards[0].nameZh}」的過往經驗，到「${selectedCards[1].nameZh}」的現況覺察，再到「${selectedCards[2].nameZh}」的未來指引。命運的算法顯示，您正處於重要的人生轉折點。建議保持開放的心態，信任直覺，擁抱即將到來的改變。`;
-            
-            const summaryEn = `Synthesizing the three cards: from the past experience of "${selectedCards[0].nameEn}", to the present awareness of "${selectedCards[1].nameEn}", and the future guidance of "${selectedCards[2].nameEn}". The algorithm of destiny shows you are at an important turning point. Stay open-minded, trust your intuition, and embrace the coming changes.`;
-
-            // Render content
-            let html = `
-                <div class="reading-section">
-                    <h4>問題 Question</h4>
-                    <p>${question}</p>
-                </div>
-            `;
-
-            readingsZh.forEach((reading, i) => {
                 html += `
                     <div class="reading-section">
-                        <h4>${reading.position}位置 - ${reading.card} <span class="en">${readingsEn[i].position} - ${readingsEn[i].card}</span></h4>
-                        <p>${reading.text}</p>
-                        <p class="en-text">${readingsEn[i].text}</p>
+                        <h4>${positions[i]} - ${name} ${card.symbol}</h4>
+                        <p>${interpretation}</p>
                     </div>
                 `;
             });
 
+            // Summary
+            const c0 = currentLang === 'zh' ? selectedCards[0].zh : selectedCards[0].en;
+            const c1 = currentLang === 'zh' ? selectedCards[1].zh : selectedCards[1].en;
+            const c2 = currentLang === 'zh' ? selectedCards[2].zh : selectedCards[2].en;
+            
+            const summary = currentLang === 'zh' 
+                ? `綜合三張牌的訊息：從「${c0}」的過往經驗，到「${c1}」的現況覺察，再到「${c2}」的未來指引。命運的算法顯示，您正處於重要的人生轉折點。建議保持開放的心態，信任直覺，擁抱即將到來的改變。`
+                : `Synthesizing the three cards: from "${c0}" in the past, to "${c1}" in the present, to "${c2}" guiding the future. The algorithm shows you're at an important turning point. Stay open, trust your intuition, and embrace the changes ahead.`;
+
             html += `
                 <div class="summary-box">
-                    <h4>
-                        ⭐ 總結解讀
-                        <span class="en">Summary Reading</span>
-                    </h4>
-                    <p class="summary-text">
-                        ${summaryZh}
-                        <span class="en-text">${summaryEn}</span>
-                    </p>
+                    <h4>${t('summary')}</h4>
+                    <p class="summary-text">${summary}</p>
                 </div>
             `;
 
@@ -1616,7 +1378,7 @@
             document.getElementById('readingResult').classList.add('show');
 
             // Store for print
-            window.currentReading = { question, readingsZh, readingsEn, summaryZh, summaryEn };
+            window.currentReading = { question, summary };
         }
 
         // ==================== RESET ====================
@@ -1629,7 +1391,7 @@
 
         // ==================== SAVE IMAGE ====================
         async function saveAsImage() {
-            showToast('正在生成圖片... Generating image...');
+            showToast(t('savingImage'));
 
             try {
                 const element = document.getElementById('mainContent');
@@ -1640,40 +1402,45 @@
                     useCORS: true
                 });
 
+                // Create download link
                 const link = document.createElement('a');
                 link.download = `PM-Mayors-Tarot-${Date.now()}.png`;
                 link.href = canvas.toDataURL('image/png');
+                
+                // Try to trigger download
+                document.body.appendChild(link);
                 link.click();
-
-                showToast('圖片已儲存！ Image saved!');
+                document.body.removeChild(link);
+                
+                // Don't show success message - user will see if download worked
             } catch (error) {
-                console.error('Save image error:', error);
-                showToast('儲存失敗，請重試 Save failed, please retry');
+                console.error('Save error:', error);
             }
         }
 
         // ==================== PRINT PDF ====================
         function printAsPDF() {
-            if (!window.currentReading) {
-                showToast('請先進行占卜 Please draw cards first');
+            if (!window.currentReading || selectedCards.length === 0) {
+                showToast(t('pleaseDrawFirst'));
                 return;
             }
 
-            const { question, readingsZh, readingsEn, summaryZh, summaryEn } = window.currentReading;
+            const { question, summary } = window.currentReading;
+            const positions = t('positions');
 
-            // Prepare print content
-            document.getElementById('printDate').textContent = new Date().toLocaleString('zh-TW');
-            document.getElementById('printQuestion').innerHTML = `<p><strong>問題 Question:</strong> ${question}</p>`;
+            document.getElementById('printTitle').textContent = t('printTitle');
+            document.getElementById('printDate').textContent = new Date().toLocaleString();
+            document.getElementById('printQuestion').innerHTML = `<p><strong>${t('question')}:</strong> ${question}</p>`;
 
             // Cards
             let cardsHtml = '';
             selectedCards.forEach((card, i) => {
+                const name = currentLang === 'zh' ? card.zh : card.en;
                 cardsHtml += `
                     <div class="print-card">
-                        <div>${positions[i].zh} | ${positions[i].en}</div>
+                        <div class="pos">${positions[i]}</div>
                         <div class="symbol">${card.symbol}</div>
-                        <div class="name">${card.nameZh}</div>
-                        <div>${card.nameEn}</div>
+                        <div class="name">${name}</div>
                     </div>
                 `;
             });
@@ -1681,25 +1448,23 @@
 
             // Readings
             let readingsHtml = '';
-            readingsZh.forEach((reading, i) => {
+            selectedCards.forEach((card, i) => {
+                const name = currentLang === 'zh' ? card.zh : card.en;
+                const meaning = currentLang === 'zh' ? card.meaningZh : card.meaningEn;
                 readingsHtml += `
                     <div class="print-section">
-                        <h3>${reading.position} | ${readingsEn[i].position} - ${reading.card} | ${readingsEn[i].card}</h3>
-                        <p>${reading.text}</p>
-                        <p><em>${readingsEn[i].text}</em></p>
+                        <h3>${positions[i]} - ${name}</h3>
+                        <p>${meaning}</p>
                     </div>
                 `;
             });
             document.getElementById('printReadings').innerHTML = readingsHtml;
 
-            // Summary
             document.getElementById('printSummary').innerHTML = `
-                <h3>⭐ 總結 Summary</h3>
-                <p>${summaryZh}</p>
-                <p><em>${summaryEn}</em></p>
+                <h3>${t('summary')}</h3>
+                <p>${summary}</p>
             `;
 
-            // Show print area and print
             const printArea = document.getElementById('printArea');
             printArea.classList.add('printing');
 
@@ -1714,89 +1479,141 @@
             const toast = document.getElementById('toast');
             toast.textContent = message;
             toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
+            setTimeout(() => toast.classList.remove('show'), 2500);
         }
 
-        // ==================== TIME UPDATE ====================
+        // ==================== TIME ====================
         function updateTime() {
-            const now = new Date();
-            document.getElementById('currentTime').textContent = now.toLocaleTimeString('zh-TW', { hour12: false });
-            document.getElementById('currentDate').textContent = now.toLocaleDateString('zh-TW');
+            document.getElementById('currentTime').textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
+        }
+
+        // ==================== MEDIAPIPE HAND TRACKING ====================
+        async function initHandTracking() {
+            try {
+                const { HandLandmarker, FilesetResolver } = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm');
+                
+                const vision = await FilesetResolver.forVisionTasks(
+                    'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
+                );
+
+                handLandmarker = await HandLandmarker.createFromOptions(vision, {
+                    baseOptions: {
+                        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
+                        delegate: 'GPU'
+                    },
+                    runningMode: 'VIDEO',
+                    numHands: 2,
+                    minHandDetectionConfidence: 0.5,
+                    minHandPresenceConfidence: 0.5,
+                    minTrackingConfidence: 0.5
+                });
+
+                console.log('Hand Landmarker initialized');
+                startHandDetection();
+            } catch (error) {
+                console.error('Hand tracking init error:', error);
+            }
+        }
+
+        function startHandDetection() {
+            const video = document.getElementById('webcam');
+            const handCanvas = document.getElementById('handCanvas');
+            const hCtx = handCanvas.getContext('2d');
+            
+            handCanvas.width = window.innerWidth;
+            handCanvas.height = window.innerHeight;
+
+            let lastTime = -1;
+
+            function detect() {
+                if (video.readyState >= 2 && handLandmarker) {
+                    const now = performance.now();
+                    if (now !== lastTime) {
+                        lastTime = now;
+                        
+                        try {
+                            const results = handLandmarker.detectForVideo(video, now);
+                            
+                            // Clear canvas
+                            hCtx.clearRect(0, 0, handCanvas.width, handCanvas.height);
+
+                            if (results.landmarks && results.landmarks.length > 0) {
+                                handDetected = true;
+                                document.getElementById('handDot').classList.add('active');
+                                document.getElementById('handStatus').textContent = t('handDetected');
+
+                                // Draw hand landmarks
+                                results.landmarks.forEach(landmarks => {
+                                    drawHandLandmarks(hCtx, landmarks, handCanvas.width, handCanvas.height);
+                                });
+                            } else {
+                                handDetected = false;
+                                document.getElementById('handDot').classList.remove('active');
+                                document.getElementById('handStatus').textContent = t('handNone');
+                            }
+                        } catch (e) {
+                            // Silently handle detection errors
+                        }
+                    }
+                }
+                requestAnimationFrame(detect);
+            }
+
+            detect();
+        }
+
+        function drawHandLandmarks(ctx, landmarks, width, height) {
+            const connections = [
+                [0, 1], [1, 2], [2, 3], [3, 4],
+                [0, 5], [5, 6], [6, 7], [7, 8],
+                [0, 9], [9, 10], [10, 11], [11, 12],
+                [0, 13], [13, 14], [14, 15], [15, 16],
+                [0, 17], [17, 18], [18, 19], [19, 20],
+                [5, 9], [9, 13], [13, 17]
+            ];
+
+            ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)';
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#00FFFF';
+
+            // Draw connections
+            connections.forEach(([i, j]) => {
+                const p1 = landmarks[i];
+                const p2 = landmarks[j];
+                ctx.beginPath();
+                ctx.moveTo((1 - p1.x) * width, p1.y * height);
+                ctx.lineTo((1 - p2.x) * width, p2.y * height);
+                ctx.stroke();
+            });
+
+            // Draw points
+            ctx.fillStyle = 'rgba(255, 107, 53, 0.9)';
+            landmarks.forEach(point => {
+                ctx.beginPath();
+                ctx.arc((1 - point.x) * width, point.y * height, 5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            ctx.shadowBlur = 0;
         }
 
         // ==================== CAMERA ====================
         async function initCamera() {
-            const cameraValue = document.getElementById('cameraValue');
-            const gestureValue = document.getElementById('gestureValue');
-            const cameraNote = document.getElementById('cameraNote');
-            const webcam = document.getElementById('webcam');
-
-            // Check if HTTPS
-            const isSecure = location.protocol === 'https:' || location.hostname === 'localhost';
-
-            if (!isSecure) {
-                cameraValue.textContent = '需要HTTPS';
-                cameraValue.className = 'value warning';
-                cameraNote.innerHTML = `
-                    ⚠️ 手部追蹤需要HTTPS環境<br>
-                    Hand tracking requires HTTPS<br><br>
-                    📍 請部署到 Vercel 後即可使用<br>
-                    Deploy to Vercel to enable this feature
-                `;
-                return;
-            }
-
+            const video = document.getElementById('webcam');
+            
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'user', width: 1280, height: 720 }
+                    video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }
                 });
-                webcam.srcObject = stream;
-                webcam.classList.add('active');
-                cameraValue.textContent = '已啟用 Active';
-                cameraValue.className = 'value active';
-                gestureValue.textContent = '就緒 Ready';
-                gestureValue.className = 'value active';
-                cameraNote.innerHTML = `
-                    ✅ 攝影機已啟用<br>
-                    Camera activated<br><br>
-                    💡 完整手勢追蹤需要 MediaPipe 整合<br>
-                    Full gesture tracking requires MediaPipe integration
-                `;
+                video.srcObject = stream;
+                video.classList.add('active');
+                
+                video.onloadedmetadata = () => {
+                    initHandTracking();
+                };
             } catch (error) {
-                console.error('Camera error:', error);
-                cameraValue.textContent = '未授權 Denied';
-                cameraValue.className = 'value error';
-                cameraNote.innerHTML = `
-                    ❌ 無法存取攝影機<br>
-                    Cannot access camera<br><br>
-                    請允許攝影機權限或檢查設備<br>
-                    Please allow camera permission or check device
-                `;
-            }
-        }
-
-        // ==================== LOGO ====================
-        function initLogo() {
-            const logoImg = document.getElementById('logoImg');
-            const logoFallback = document.getElementById('logoFallback');
-
-            logoImg.onload = function() {
-                logoImg.style.display = 'block';
-                logoFallback.style.display = 'none';
-            };
-
-            logoImg.onerror = function() {
-                logoImg.style.display = 'none';
-                logoFallback.style.display = 'block';
-            };
-
-            // Trigger load check
-            if (logoImg.complete) {
-                if (logoImg.naturalHeight === 0) {
-                    logoImg.onerror();
-                } else {
-                    logoImg.onload();
-                }
+                console.log('Camera access denied or unavailable');
             }
         }
 
@@ -1805,16 +1622,22 @@
             // Hide loading
             setTimeout(() => {
                 document.getElementById('loadingOverlay').classList.add('hidden');
-            }, 1500);
+            }, 1200);
 
-            // Initialize
+            // Init
             generateCardDeck();
-            initLogo();
-            initCamera();
             updateTime();
             setInterval(updateTime, 1000);
+            initCamera();
 
-            // Event listeners
+            // Logo fallback
+            const logoImg = document.getElementById('logoImg');
+            if (logoImg.complete && logoImg.naturalHeight === 0) {
+                logoImg.style.display = 'none';
+                document.getElementById('logoFallback').style.display = 'block';
+            }
+
+            // Events
             document.getElementById('btnDraw').addEventListener('click', drawCards);
             document.getElementById('btnReset').addEventListener('click', resetCards);
             document.getElementById('btnSaveImage').addEventListener('click', saveAsImage);
@@ -1824,18 +1647,25 @@
                 if (e.key === 'Enter') drawCards();
             });
 
-            // Add ambient particles
+            // Ambient particles
             setInterval(() => {
-                if (particles.length < 20) {
+                if (particles.length < 15) {
                     const x = Math.random() * window.innerWidth;
                     const y = Math.random() * window.innerHeight;
-                    const particle = new Particle(x, y, 'rgba(0, 255, 255, 0.5)');
-                    particle.decay = 0.005;
-                    particle.speedX = (Math.random() - 0.5) * 2;
-                    particle.speedY = (Math.random() - 0.5) * 2;
-                    particles.push(particle);
+                    const p = new Particle(x, y, 'rgba(0, 255, 255, 0.4)');
+                    p.decay = 0.003;
+                    p.speedX = (Math.random() - 0.5) * 1;
+                    p.speedY = (Math.random() - 0.5) * 1;
+                    particles.push(p);
                 }
-            }, 500);
+            }, 400);
+
+            // Resize hand canvas on window resize
+            window.addEventListener('resize', () => {
+                const handCanvas = document.getElementById('handCanvas');
+                handCanvas.width = window.innerWidth;
+                handCanvas.height = window.innerHeight;
+            });
         });
     </script>
 </body>

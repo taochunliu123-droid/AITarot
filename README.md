@@ -1,115 +1,89 @@
-# PM里長伯塔羅牌 v2.0 | PM Mayors Algorithmic Tarot
+# PM里長伯塔羅牌 v3.0 | PM Mayors Tarot
 
 🏘️ 里長伯幫助您用AI玩轉敏捷
 
-## 新功能 New Features
+## 修復與更新 Fixes & Updates
 
-### ✨ 超炫粒子特效 Amazing Particle Effects
-- 抽牌時的能量爆發效果
-- 魔法陣聚合動畫
-- 卡片翻轉時的粒子爆炸
-- 環境漂浮粒子
+### ✅ 手部追蹤 Hand Tracking
+- 使用 MediaPipe Tasks Vision 最新版本
+- 正確載入 HandLandmarker 模型
+- 即時繪製手部骨架（青色連線 + 橙色關節點）
+- 需要 HTTPS 環境（部署到 Vercel 後即可使用）
 
-### 📱 手機儲存圖片 Mobile Image Save
-- 點擊「圖片」按鈕
-- 自動生成高解析度 PNG
-- 支援直接下載到相簿
+### ✅ 塔羅牌翻牌修復 Card Flip Fixed
+- 修復了無法翻牌的問題
+- 增加洗牌動畫效果
+- 每張牌翻開時有粒子爆炸特效
+- 能量爆發效果
 
-### 🖨️ 電腦版列印 PDF Desktop PDF Print
-- 點擊「PDF」按鈕
-- 自動格式化列印版面
-- 使用瀏覽器列印功能存為 PDF
+### ✅ 中英文切換 Language Toggle
+- 右上角「中文 / EN」按鈕
+- 一鍵切換整個介面語言
+- 不會同時顯示兩種語言
 
-### 🌐 中英對照 Bilingual Support
-- 所有介面文字都有中英文
-- 塔羅牌名稱中英對照
-- 解讀結果雙語呈現
-- 總結同時顯示中英文
+### ✅ 圖片儲存 Image Save
+- 移除「已完成」提示訊息
+- 直接觸發下載
+- 相容各種瀏覽器
 
-### 📊 總結功能 Summary Feature
-- 綜合三張牌的整體解讀
-- 明確的人生建議
-- 中英文同步呈現
+### ✅ LinkedIn 連結 LinkedIn Link
+- 修復連結：https://www.linkedin.com/in/taochunliu/
+- 點擊可正常跳轉
 
-## 關於攝影機/手勢追蹤 About Camera/Gesture Tracking
+## 功能 Features
 
-### 為什麼手部偵測不工作？
-瀏覽器的安全限制要求：
-1. **HTTPS 環境**：攝影機 API 只能在安全連線下運作
-2. **本地開發**：只有 `localhost` 可以使用 HTTP
+| 功能 | 說明 |
+|------|------|
+| 🖐️ 手部追蹤 | MediaPipe 即時偵測，繪製骨架 |
+| 🎴 塔羅抽牌 | 22張大阿卡納，3牌陣 |
+| ✨ 粒子特效 | 翻牌爆炸、能量爆發、環境粒子 |
+| 🌐 中英切換 | 按鈕切換，不混合顯示 |
+| 📱 儲存圖片 | 手機可下載 PNG |
+| 🖨️ 列印 PDF | 電腦版列印功能 |
+| ⭐ 總結解讀 | 綜合三張牌的建議 |
 
-### 解決方案
-1. **部署到 Vercel**：最簡單的方式，自動獲得 HTTPS
-2. **本地測試**：使用 `localhost` 而非 IP 位址
+## 部署 Deploy
 
-### 部署後即可使用的功能
-- ✅ 攝影機背景
-- ✅ 手勢追蹤基礎（需要額外整合 MediaPipe）
+### 步驟
+1. 下載並解壓縮
+2. 將你的 `logo.png` 放入資料夾
+3. 拖放到 [vercel.com/new](https://vercel.com/new)
+4. 等待部署完成
 
-## 部署到 Vercel
-
-### 方法一：拖放部署
-1. 下載此專案資料夾
-2. 將您的 `logo.png` 放入資料夾
-3. 前往 [vercel.com/new](https://vercel.com/new)
-4. 拖放整個資料夾
-5. 等待部署完成
-
-### 方法二：GitHub + Vercel
-1. 將專案推送到 GitHub
-2. 在 Vercel 導入 GitHub 專案
-3. 自動部署
-
-### 方法三：Vercel CLI
-```bash
-npm i -g vercel
-cd pm-mayors-tarot-v2
-vercel
-```
+### 為什麼需要部署？
+- 攝影機 API 需要 HTTPS
+- MediaPipe 模型需要網路載入
+- 本地只能用 localhost 測試
 
 ## 檔案結構
 
 ```
-pm-mayors-tarot-v2/
-├── index.html      # 主應用程式（包含所有功能）
-├── logo.png        # 您的 Logo（請自行添加）
-├── vercel.json     # Vercel 部署配置
+pm-mayors-tarot-v3/
+├── index.html      # 完整應用
+├── logo.png        # 你的 Logo（請自行添加）
+├── vercel.json     # Vercel 配置
 └── README.md       # 說明文件
 ```
 
-## 使用說明 Usage
+## 使用說明
 
-1. **輸入問題**：在輸入框中輸入您想占卜的問題
-2. **抽牌**：點擊「啟動塔羅算法」按鈕
-3. **觀看特效**：欣賞粒子爆發和卡片翻轉動畫
-4. **閱讀解讀**：查看中英文對照的占卜結果
-5. **儲存結果**：
-   - 📱 手機：點擊「圖片」按鈕下載 PNG
-   - 💻 電腦：點擊「PDF」按鈕列印/存為 PDF
+1. 選擇語言（中文/EN）
+2. 輸入問題（可選）
+3. 點擊「啟動塔羅算法」
+4. 欣賞特效並閱讀解讀
+5. 儲存圖片或列印 PDF
 
-## 技術棧 Tech Stack
+## 技術棧
 
-- **HTML5 Canvas** - 粒子系統
-- **Three.js** - 3D 效果（備用）
-- **html2canvas** - 截圖功能
-- **jsPDF** - PDF 生成（備用）
-- **原生 JavaScript** - 零框架依賴
-- **CSS3 動畫** - 流暢視覺效果
-- **WebRTC** - 攝影機存取
+- MediaPipe Tasks Vision 0.10.14
+- html2canvas 1.4.1
+- 原生 JavaScript
+- CSS3 動畫
 
-## 瀏覽器支援 Browser Support
+## 作者
 
-- ✅ Chrome 80+
-- ✅ Firefox 75+
-- ✅ Safari 13+
-- ✅ Edge 80+
-- ✅ iOS Safari
-- ✅ Android Chrome
-
-## 作者 Author
-
-**Tao Chun Liu (PM Mayors)**
-- LinkedIn: [linkedin.com/in/taochunliu](https://www.linkedin.com/in/taochunliu/)
+**Tao Chun Liu (PM Mayors)**  
+🔗 [LinkedIn](https://www.linkedin.com/in/taochunliu/)
 
 ---
 
