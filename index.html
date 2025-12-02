@@ -1730,23 +1730,57 @@ document.getElementById('handStatus').textContent = statusText;
 
         // ==================== INIT ====================
         document.addEventListener('DOMContentLoaded', () => {
-            // Hide loading
+            // 1. 模擬初始化完成，隱藏 Loading，顯示歡迎頁面
             setTimeout(() => {
                 document.getElementById('loadingOverlay').classList.add('hidden');
-            }, 1200);
-
-            // Init
-            generateCardDeck();
-            updateTime();
-            setInterval(updateTime, 1000);
-            initCamera();
+                document.getElementById('introScreen').style.display = 'flex'; // 顯示歡迎頁
+            }, 1000);
 
             // Logo fallback
             const logoImg = document.getElementById('logoImg');
-            if (logoImg.complete && logoImg.naturalHeight === 0) {
-                logoImg.style.display = 'none';
-                document.getElementById('logoFallback').style.display = 'block';
+            if (logoImg) {
+                logoImg.onerror = function() {
+                    this.style.display = 'none';
+                    document.getElementById('logoFallback').style.display = 'block';
+                };
             }
+
+            // Events
+            document.getElementById('btnDraw').addEventListener('click', drawCards);
+            document.getElementById('btnReset').addEventListener('click', resetCards);
+            document.getElementById('btnSaveImage').addEventListener('click', saveAsImage);
+            document.getElementById('btnPrint').addEventListener('click', printAsPDF);
+            
+            // Particles logic... (保留原有的粒子特效代碼)
+             setInterval(() => {
+                if (particles.length < 15) {
+                    const x = Math.random() * window.innerWidth;
+                    const y = Math.random() * window.innerHeight;
+                    const p = new Particle(x, y, 'rgba(0, 255, 255, 0.4)');
+                    p.decay = 0.003;
+                    p.speedX = (Math.random() - 0.5) * 1;
+                    p.speedY = (Math.random() - 0.5) * 1;
+                    particles.push(p);
+                }
+            }, 400);
+        });
+
+        // [NEW] 點擊語言按鈕後觸發
+        function startApp(lang) {
+            // 設定語言
+            setLang(lang);
+            
+            // 淡出歡迎頁
+            const intro = document.getElementById('introScreen');
+            intro.classList.add('fade-out');
+            setTimeout(() => { intro.style.display = 'none'; }, 800);
+
+            // 啟動時間與相機
+            generateCardDeck();
+            updateTime();
+            setInterval(updateTime, 1000);
+            initCamera(); // 這裡才真正啟動相機
+        }
 
             // Events
             document.getElementById('btnDraw').addEventListener('click', drawCards);
