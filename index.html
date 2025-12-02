@@ -12,7 +12,31 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg-dark); color: var(--cyber-cyan); overflow-x: hidden; min-height: 100vh; }
         @media print { body * { visibility: hidden; } #printArea, #printArea * { visibility: visible; } #printArea { position: absolute; left: 0; top: 0; width: 100%; background: white !important; color: black !important; padding: 30px; } }
-        @media (max-width: 768px) { #btnPrint { display: none !important; } }
+        @media (max-width: 768px) { 
+            #btnPrint { display: none !important; } 
+            /* 手機版卡片樣式 */
+            .card-deck { min-height: 200px; gap: 8px; }
+            .tarot-card { width: clamp(85px, 28vw, 110px); height: clamp(140px, 46vw, 180px); }
+            .card-front { padding: 6px; }
+            .card-position { font-size: 0.5rem; }
+            .card-number { font-size: 0.5rem; margin-top: 1px; }
+            .card-image { font-size: 2.2rem; }
+            .card-name { margin-top: 2px; }
+            .card-name-text { font-size: 0.6rem; }
+            .card-meaning { font-size: 0.45rem; margin-top: 2px; line-height: 1.1; }
+            .card-pattern { font-size: 2rem; }
+            .card-back::before { width: 70%; height: 70%; }
+        }
+        @media (max-width: 400px) {
+            /* 更小螢幕 */
+            .tarot-card { width: 80px; height: 130px; }
+            .card-front { padding: 4px; }
+            .card-position { font-size: 0.45rem; }
+            .card-number { font-size: 0.45rem; }
+            .card-image { font-size: 1.8rem; }
+            .card-name-text { font-size: 0.5rem; }
+            .card-meaning { font-size: 0.4rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        }
         .scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,255,0.015) 2px, rgba(0,255,255,0.015) 4px); }
         #particleCanvas, #handCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         #particleCanvas { z-index: 50; } #handCanvas { z-index: 10; }
