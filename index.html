@@ -1524,7 +1524,13 @@
             handCanvas.height = window.innerHeight;
 
             let lastTime = -1;
-            let lastGestureTime = 0; // 新增：防止重複觸發的冷卻時間
+            
+            // ==========================================
+            // 新增變數：防抖動與長按觸發控制
+            // ==========================================
+            let pinchStartTime = 0;      // 開始捏合的時間點
+            const TRIGGER_DELAY = 1000;  // 需要持續捏合多久才觸發 (單位: 毫秒，這裡設為 1秒)
+            let isHolding = false;       // 是否正在捏合中
 
             function detect() {
                 if (video.readyState >= 2 && handLandmarker) {
@@ -1535,72 +1541,106 @@
                         try {
                             const results = handLandmarker.detectForVideo(video, now);
                             
-                            // Clear canvas
+                            // 清除畫布
                             hCtx.clearRect(0, 0, handCanvas.width, handCanvas.height);
 
+                            // 如果有偵測到手
                             if (results.landmarks && results.landmarks.length > 0) {
                                 handDetected = true;
                                 document.getElementById('handDot').classList.add('active');
                                 document.getElementById('handStatus').textContent = t('handDetected');
 
-                                // Draw hand landmarks
-                                results.landmarks.forEach(landmarks => {
-                                    drawHandLandmarks(hCtx, landmarks, handCanvas.width, handCanvas.height);
-                                    
-                                    // ==========================================
-                                    // 新增：手勢偵測邏輯 (Gesture Logic)
-                                    // ==========================================
-                                    checkGesture(landmarks, now);
-                                });
+                                // 只取第一隻手來做判斷，避免雙手打架
+                                const landmarks = results.landmarks[0]; 
+                                
+                                // 1. 先畫骨架
+                                drawHandLandmarks(hCtx, landmarks, handCanvas.width, handCanvas.height);
+                                
+                                // 2. 再檢查手勢
+                                checkGestureWithHold(hCtx, landmarks, now);
+
                             } else {
+                                // 沒手的時候，重置計時器
                                 handDetected = false;
+                                pinchStartTime = 0;
+                                isHolding = false;
                                 document.getElementById('handDot').classList.remove('active');
                                 document.getElementById('handStatus').textContent = t('handNone');
                             }
                         } catch (e) {
-                            // Silently handle detection errors
+                            // 錯誤處理
                         }
                     }
                 }
                 requestAnimationFrame(detect);
             }
 
-            // 新增：檢查手勢的函數
-            function checkGesture(landmarks, time) {
-                // 取得大拇指指尖 (4) 和 食指指尖 (8)
+            // ==========================================
+            // 新增：帶有「長按確認」的手勢檢查
+            // ==========================================
+            function checkGestureWithHold(ctx, landmarks, time) {
+                // 如果正在抽牌中，就不做任何感應
+                if (isDrawing) {
+                    pinchStartTime = 0;
+                    return;
+                }
+
                 const thumbTip = landmarks[4];
                 const indexTip = landmarks[8];
-
-                // 計算兩點之間的距離 (歐幾里得距離)
-                // 注意：landmarks 的 x, y 是 0~1 的比例，需要考慮長寬比，但在這裡直接用簡化距離通常足夠
+                
+                // 計算距離
                 const distance = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
+                const screenX = (1 - thumbTip.x) * handCanvas.width;
+                const screenY = thumbTip.y * handCanvas.height;
 
-                // 設定閾值：當距離小於 0.05 (視情況調整)，視為「捏合」
-                // 並且加上 isDrawing 檢查，避免在動畫中重複觸發
-                // 加上 2秒 (2000ms) 的冷卻時間，避免誤觸
-                if (distance < 0.05 && !isDrawing && (time - lastGestureTime > 2000)) {
-                    
-                    // 視覺回饋：在捏合處畫一個發光的圈圈
-                    hCtx.beginPath();
-                    hCtx.arc((1 - thumbTip.x) * handCanvas.width, thumbTip.y * handCanvas.height, 20, 0, Math.PI * 2);
-                    hCtx.strokeStyle = '#FF3366'; // Cyber Red
-                    hCtx.lineWidth = 4;
-                    hCtx.stroke();
+                // 閾值設定 (0.06 約為手指輕觸的距離)
+                if (distance < 0.06) {
+                    if (!isHolding) {
+                        // 剛開始捏合，記錄時間
+                        isHolding = true;
+                        pinchStartTime = time;
+                    }
 
-                    // 更新觸發時間
-                    lastGestureTime = time;
+                    // 計算持續了多久
+                    const elapsed = time - pinchStartTime;
+                    const progress = Math.min(elapsed / TRIGGER_DELAY, 1); // 0.0 ~ 1.0
 
-                    // 顯示 Toast 提示
-                    showToast("👌 手勢識別：啟動算法");
+                    // === 視覺回饋：畫出進度圈圈 ===
+                    ctx.beginPath();
+                    // 外圈 (底色)
+                    ctx.arc(screenX, screenY, 25, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
+                    ctx.lineWidth = 4;
+                    ctx.stroke();
 
-                    // 執行抽牌
-                    drawCards();
+                    // 進度條 (動態)
+                    ctx.beginPath();
+                    // 從 -90度(12點鐘) 開始畫
+                    ctx.arc(screenX, screenY, 25, -Math.PI / 2, (-Math.PI / 2) + (Math.PI * 2 * progress));
+                    ctx.strokeStyle = '#FF6B35'; // 使用 Logo 的橘色
+                    ctx.lineWidth = 5;
+                    ctx.stroke();
+
+                    // === 觸發判斷 ===
+                    if (progress >= 1) {
+                        // 確認已滿 1 秒，觸發！
+                        showToast("👌 手勢確認：啟動！");
+                        drawCards();
+                        
+                        // 觸發後重置，避免連續觸發
+                        pinchStartTime = 0; 
+                        isHolding = false;
+                    }
+
+                } else {
+                    // 手指放開了，重置所有狀態
+                    isHolding = false;
+                    pinchStartTime = 0;
                 }
             }
 
             detect();
         }
-
         function drawHandLandmarks(ctx, landmarks, width, height) {
             const connections = [
                 [0, 1], [1, 2], [2, 3], [3, 4],
