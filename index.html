@@ -15,27 +15,27 @@
         @media (max-width: 768px) { 
             #btnPrint { display: none !important; } 
             /* 手機版卡片樣式 */
-            .card-deck { min-height: 200px; gap: 8px; }
-            .tarot-card { width: clamp(85px, 28vw, 110px); height: clamp(140px, 46vw, 180px); }
-            .card-front { padding: 6px; }
+            .card-deck { min-height: 220px; gap: 6px; }
+            .tarot-card { width: clamp(95px, 30vw, 115px); height: clamp(160px, 52vw, 200px); }
+            .card-front { padding: 5px 4px; }
             .card-position { font-size: 0.5rem; }
-            .card-number { font-size: 0.5rem; margin-top: 1px; }
-            .card-image { font-size: 2.2rem; }
-            .card-name { margin-top: 2px; }
-            .card-name-text { font-size: 0.6rem; }
-            .card-meaning { font-size: 0.45rem; margin-top: 2px; line-height: 1.1; }
+            .card-number { font-size: 0.55rem; margin-top: 1px; }
+            .card-image { font-size: 2.5rem; min-height: 50px; flex: 1; }
+            .card-name { margin-top: 3px; flex-shrink: 0; }
+            .card-name-text { font-size: 0.55rem; line-height: 1.2; word-break: break-word; overflow-wrap: break-word; white-space: normal; }
+            .card-meaning { display: none; } /* 手機版隱藏含義，騰出空間給牌名 */
             .card-pattern { font-size: 2rem; }
             .card-back::before { width: 70%; height: 70%; }
         }
         @media (max-width: 400px) {
             /* 更小螢幕 */
-            .tarot-card { width: 80px; height: 130px; }
-            .card-front { padding: 4px; }
+            .card-deck { gap: 4px; }
+            .tarot-card { width: 90px; height: 150px; }
+            .card-front { padding: 4px 3px; }
             .card-position { font-size: 0.45rem; }
-            .card-number { font-size: 0.45rem; }
-            .card-image { font-size: 1.8rem; }
+            .card-number { font-size: 0.5rem; }
+            .card-image { font-size: 2rem; min-height: 40px; }
             .card-name-text { font-size: 0.5rem; }
-            .card-meaning { font-size: 0.4rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         }
         .scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,255,0.015) 2px, rgba(0,255,255,0.015) 4px); }
         #particleCanvas, #handCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
@@ -82,13 +82,13 @@
         @keyframes rotateFrame { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .card-pattern { font-size: clamp(2rem, 6vw, 3.5rem); color: var(--cyber-cyan); text-shadow: 0 0 25px var(--cyber-cyan); animation: patternPulse 2s infinite; z-index: 1; }
         @keyframes patternPulse { 0%, 100% { opacity: 0.6; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } }
-        .card-front { background: linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%); border: 2px solid var(--cyber-gold); transform: rotateY(180deg); padding: 10px; display: flex; flex-direction: column; box-shadow: 0 0 35px rgba(255, 215, 0, 0.4); }
-        .card-position { font-family: 'Orbitron'; font-size: 0.65rem; color: var(--cyber-purple); text-align: center; }
-        .card-number { font-family: 'Orbitron'; font-size: 0.7rem; color: var(--cyber-gold); text-align: center; margin-top: 2px; }
-        .card-image { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 3.5rem; text-shadow: 0 0 25px currentColor; }
-        .card-name { text-align: center; margin-top: 5px; }
-        .card-name-text { font-family: 'Orbitron'; font-size: 0.85rem; color: var(--cyber-cyan); text-shadow: 0 0 10px var(--cyber-cyan); }
-        .card-meaning { font-size: 0.6rem; color: #777; text-align: center; margin-top: 3px; line-height: 1.2; }
+        .card-front { background: linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%); border: 2px solid var(--cyber-gold); transform: rotateY(180deg); padding: 10px; display: flex; flex-direction: column; box-shadow: 0 0 35px rgba(255, 215, 0, 0.4); overflow: hidden; }
+        .card-position { font-family: 'Orbitron'; font-size: 0.65rem; color: var(--cyber-purple); text-align: center; flex-shrink: 0; }
+        .card-number { font-family: 'Orbitron'; font-size: 0.7rem; color: var(--cyber-gold); text-align: center; margin-top: 2px; flex-shrink: 0; }
+        .card-image { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 3.5rem; text-shadow: 0 0 25px currentColor; min-height: 0; }
+        .card-name { text-align: center; margin-top: 5px; flex-shrink: 0; }
+        .card-name-text { font-family: 'Orbitron'; font-size: 0.85rem; color: var(--cyber-cyan); text-shadow: 0 0 10px var(--cyber-cyan); line-height: 1.2; }
+        .card-meaning { font-size: 0.6rem; color: #777; text-align: center; margin-top: 3px; line-height: 1.2; flex-shrink: 0; }
         .control-panel { background: var(--bg-panel); border: 1px solid var(--cyber-cyan); border-radius: 10px; padding: 20px; margin-bottom: 25px; backdrop-filter: blur(10px); }
         .control-title { font-family: 'Orbitron'; font-size: 0.9rem; color: var(--cyber-orange); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
         .control-title::before { content: '▶'; animation: blink 1s infinite; }
