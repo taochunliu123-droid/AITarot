@@ -687,20 +687,43 @@
 
         function generateReading() {
             const question = document.getElementById('questionInput').value || (currentLang === 'zh' ? '通用占卜' : 'General Reading');
+            const positions = t('positions');
+            
             let html = `<div class="reading-section"><h4>${t('question')}</h4><p>${question}</p></div>`;
             
             selectedCards.forEach((card, i) => {
                 const name = currentLang === 'zh' ? card.zh : card.en;
                 const meaning = currentLang === 'zh' ? card.meaningZh : card.meaningEn;
-                const intro = currentLang === 'zh' 
-                    ? `在您的${t('positions')[i]}中，${name}顯示了「${meaning}」。`
-                    : `In your ${t('positions')[i]}, ${name} indicates "${meaning}".`;
-                html += `<div class="reading-section"><h4>${t('positions')[i]} - ${name} ${card.symbol}</h4><p>${intro}</p></div>`;
+                
+                // [RESTORED] 詳細解讀邏輯
+                let interpretation;
+                if (currentLang === 'zh') {
+                    const intros = [
+                        `在您的過往經歷中，${name}牌的出現象徵著「${meaning}」的能量。這段經歷為您現在的處境奠定了基礎。`,
+                        `此刻，${name}牌揭示了您當前的核心能量是「${meaning}」。這是理解您現況的關鍵訊息。`,
+                        `展望未來，${name}牌預示著「${meaning}」的能量即將進入您的生命。請敞開心扉迎接這份轉變。`
+                    ];
+                    interpretation = intros[i];
+                } else {
+                    const intros = [
+                        `In your past, the ${name} card reveals the energy of "${meaning}" has been influencing your journey.`,
+                        `Currently, the ${name} card shows your core energy is "${meaning}". This is key to understanding your present.`,
+                        `Looking ahead, the ${name} indicates "${meaning}" is about to enter your life. Open your heart to this change.`
+                    ];
+                    interpretation = intros[i];
+                }
+
+                html += `<div class="reading-section"><h4>${positions[i]} - ${name} ${card.symbol}</h4><p>${interpretation}</p></div>`;
             });
             
+            // [RESTORED] 綜合解讀邏輯
+            const c0 = currentLang === 'zh' ? selectedCards[0].zh : selectedCards[0].en;
+            const c1 = currentLang === 'zh' ? selectedCards[1].zh : selectedCards[1].en;
+            const c2 = currentLang === 'zh' ? selectedCards[2].zh : selectedCards[2].en;
+            
             const summary = currentLang === 'zh' 
-                ? "綜合分析顯示，您正處於能量轉變的關鍵時刻。請相信直覺，勇敢面對。" 
-                : "Analysis suggests a key energy shift. Trust your intuition and move forward.";
+                ? `綜合三張牌的訊息：從「${c0}」的過往經驗，到「${c1}」的現況覺察，再到「${c2}」的未來指引。命運的算法顯示，您正處於重要的人生轉折點。建議保持開放的心態，信任直覺，擁抱即將到來的改變。`
+                : `Synthesizing the three cards: from "${c0}" in the past, to "${c1}" in the present, to "${c2}" guiding the future. The algorithm shows you're at an important turning point. Stay open, trust your intuition, and embrace the changes ahead.`;
                 
             html += `<div class="summary-box"><h4>${t('summary')}</h4><p class="summary-text">${summary}</p></div>`;
             document.getElementById('readingContent').innerHTML = html;
@@ -763,7 +786,7 @@
                     },
                     runningMode: 'VIDEO',
                     numHands: 1,
-                    minHandDetectionConfidence: 0.5, // [Fix] Lowered to 0.5 for better detection
+                    minHandDetectionConfidence: 0.5, // Keep at 0.5 for easier detection
                     minHandPresenceConfidence: 0.5,
                     minTrackingConfidence: 0.5
                 });
