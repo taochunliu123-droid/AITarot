@@ -1765,53 +1765,80 @@ document.getElementById('handStatus').textContent = statusText;
             }, 400);
         });
 
-        // [NEW] 點擊語言按鈕後觸發
-        function startApp(lang) {
-            // 設定語言
-            setLang(lang);
-            
-            // 淡出歡迎頁
-            const intro = document.getElementById('introScreen');
-            intro.classList.add('fade-out');
-            setTimeout(() => { intro.style.display = 'none'; }, 800);
+      // [重要] startApp 必須放在全域環境 (Global Scope)，這樣 HTML 的 onclick 才找得到
+    function startApp(lang) {
+        // 設定語言
+        setLang(lang);
+        
+        // 淡出歡迎頁
+        const intro = document.getElementById('introScreen');
+        intro.classList.add('fade-out');
+        setTimeout(() => { intro.style.display = 'none'; }, 800);
 
-            // 啟動時間與相機
-            generateCardDeck();
-            updateTime();
-            setInterval(updateTime, 1000);
-            initCamera(); // 這裡才真正啟動相機
+        // 啟動時間與相機
+        generateCardDeck();
+        updateTime();
+        setInterval(updateTime, 1000);
+        initCamera(); // 這裡才真正啟動相機
+    }
+
+    // 當網頁載入完成後執行的邏輯
+    document.addEventListener('DOMContentLoaded', () => {
+        
+        // 1. 模擬初始化完成，隱藏 Loading，顯示歡迎頁面
+        setTimeout(() => {
+            document.getElementById('loadingOverlay').classList.add('hidden');
+            document.getElementById('introScreen').style.display = 'flex'; // 顯示歡迎頁
+        }, 1000);
+
+        // 2. Logo 載入失敗的備案 (Fallback)
+        const logoImg = document.getElementById('logoImg');
+        if (logoImg) {
+            logoImg.onerror = function() {
+                this.style.display = 'none';
+                document.getElementById('logoFallback').style.display = 'block';
+            };
         }
 
-            // Events
-            document.getElementById('btnDraw').addEventListener('click', drawCards);
-            document.getElementById('btnReset').addEventListener('click', resetCards);
-            document.getElementById('btnSaveImage').addEventListener('click', saveAsImage);
-            document.getElementById('btnPrint').addEventListener('click', printAsPDF);
+        // 3. 綁定按鈕事件 (Events)
+        document.getElementById('btnDraw').addEventListener('click', drawCards);
+        document.getElementById('btnReset').addEventListener('click', resetCards);
+        document.getElementById('btnSaveImage').addEventListener('click', saveAsImage);
+        document.getElementById('btnPrint').addEventListener('click', printAsPDF);
+        
+        // 綁定 Enter 鍵觸發抽牌 (之前漏掉的部分補回來了)
+        document.getElementById('questionInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') drawCards();
+        });
+
+        // 4. 背景粒子特效 (Ambient particles)
+        setInterval(() => {
+            if (particles.length < 15) {
+                const x = Math.random() * window.innerWidth;
+                const y = Math.random() * window.innerHeight;
+                const p = new Particle(x, y, 'rgba(0, 255, 255, 0.4)');
+                p.decay = 0.003;
+                p.speedX = (Math.random() - 0.5) * 1;
+                p.speedY = (Math.random() - 0.5) * 1;
+                particles.push(p);
+            }
+        }, 400);
+
+        // 5. 視窗縮放處理 (Resize)
+        window.addEventListener('resize', () => {
+            const handCanvas = document.getElementById('handCanvas');
+            const particleCanvas = document.getElementById('particleCanvas');
             
-            document.getElementById('questionInput').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') drawCards();
-            });
-
-            // Ambient particles
-            setInterval(() => {
-                if (particles.length < 15) {
-                    const x = Math.random() * window.innerWidth;
-                    const y = Math.random() * window.innerHeight;
-                    const p = new Particle(x, y, 'rgba(0, 255, 255, 0.4)');
-                    p.decay = 0.003;
-                    p.speedX = (Math.random() - 0.5) * 1;
-                    p.speedY = (Math.random() - 0.5) * 1;
-                    particles.push(p);
-                }
-            }, 400);
-
-            // Resize hand canvas on window resize
-            window.addEventListener('resize', () => {
-                const handCanvas = document.getElementById('handCanvas');
+            if (handCanvas) {
                 handCanvas.width = window.innerWidth;
                 handCanvas.height = window.innerHeight;
-            });
+            }
+            if (particleCanvas) { // 確保粒子畫布也會跟著縮放
+                particleCanvas.width = window.innerWidth;
+                particleCanvas.height = window.innerHeight;
+            }
         });
+    });
     </script>
 </body>
 </html>
