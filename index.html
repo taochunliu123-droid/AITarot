@@ -1524,6 +1524,7 @@
             handCanvas.height = window.innerHeight;
 
             let lastTime = -1;
+            let lastGestureTime = 0; // 新增：防止重複觸發的冷卻時間
 
             function detect() {
                 if (video.readyState >= 2 && handLandmarker) {
@@ -1545,6 +1546,11 @@
                                 // Draw hand landmarks
                                 results.landmarks.forEach(landmarks => {
                                     drawHandLandmarks(hCtx, landmarks, handCanvas.width, handCanvas.height);
+                                    
+                                    // ==========================================
+                                    // 新增：手勢偵測邏輯 (Gesture Logic)
+                                    // ==========================================
+                                    checkGesture(landmarks, now);
                                 });
                             } else {
                                 handDetected = false;
@@ -1557,6 +1563,39 @@
                     }
                 }
                 requestAnimationFrame(detect);
+            }
+
+            // 新增：檢查手勢的函數
+            function checkGesture(landmarks, time) {
+                // 取得大拇指指尖 (4) 和 食指指尖 (8)
+                const thumbTip = landmarks[4];
+                const indexTip = landmarks[8];
+
+                // 計算兩點之間的距離 (歐幾里得距離)
+                // 注意：landmarks 的 x, y 是 0~1 的比例，需要考慮長寬比，但在這裡直接用簡化距離通常足夠
+                const distance = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
+
+                // 設定閾值：當距離小於 0.05 (視情況調整)，視為「捏合」
+                // 並且加上 isDrawing 檢查，避免在動畫中重複觸發
+                // 加上 2秒 (2000ms) 的冷卻時間，避免誤觸
+                if (distance < 0.05 && !isDrawing && (time - lastGestureTime > 2000)) {
+                    
+                    // 視覺回饋：在捏合處畫一個發光的圈圈
+                    hCtx.beginPath();
+                    hCtx.arc((1 - thumbTip.x) * handCanvas.width, thumbTip.y * handCanvas.height, 20, 0, Math.PI * 2);
+                    hCtx.strokeStyle = '#FF3366'; // Cyber Red
+                    hCtx.lineWidth = 4;
+                    hCtx.stroke();
+
+                    // 更新觸發時間
+                    lastGestureTime = time;
+
+                    // 顯示 Toast 提示
+                    showToast("👌 手勢識別：啟動算法");
+
+                    // 執行抽牌
+                    drawCards();
+                }
             }
 
             detect();
