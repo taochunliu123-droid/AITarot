@@ -1,9 +1,3 @@
 {
-  "version": 2,
-  "framework": null,
-  "functions": {
-    "api/tarot.js": {
-      "runtime": "@vercel/edge"
-    }
-  }
+  "version": 2
 }
